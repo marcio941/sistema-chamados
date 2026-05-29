@@ -450,19 +450,28 @@ async function loadChamados() {
       mode:'cors'
     });
     const text=await res.text();
+    console.log('N8N RAW:', text.slice(0,500));
     let data;
-    try { data=JSON.parse(text); } catch(e) { data={chamados:[]}; }
+    try { data=JSON.parse(text); } catch(e) { 
+      toast('JSON inválido: '+text.slice(0,100),'error');
+      return;
+    }
+    console.log('N8N DATA type:', typeof data, Array.isArray(data));
     // Handle different response formats
     let chamados=[];
-    if(Array.isArray(data)) chamados=data;
+    if(Array.isArray(data)) {
+      // Array of objects - check if first item has chamados
+      if(data[0]?.chamados) chamados=data[0].chamados;
+      else chamados=data;
+    }
     else if(data.chamados) chamados=data.chamados;
-    else if(data[0]?.chamados) chamados=data[0].chamados;
-    else chamados=Object.values(data).find(v=>Array.isArray(v))||[];
+    else chamados=[];
+    console.log('Chamados encontrados:', chamados.length, chamados[0]);
     todosOsChamados=chamados;
     chamadosFiltrados=[...todosOsChamados];
     updateStats(todosOsChamados);
     renderTemas(todosOsChamados);
-    if(chamados.length===0) toast('Nenhum chamado carregado — verifique o N8N','error');
+    if(chamados.length===0) toast('0 chamados — abrindo console para debug','error');
   } catch(e) {
     console.error('Erro N8N:',e);
     toast('Erro ao conectar com N8N: '+e.message,'error');
