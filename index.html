@@ -1065,6 +1065,25 @@
         <div id="temas-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"></div>
       </div>
 
+      <!-- PAINEL DE CHAMADOS DO TEMA -->
+      <div id="tema-painel" style="display:none;margin-bottom:20px">
+        <div class="table-wrapper">
+          <div class="table-header">
+            <div>
+              <div class="table-title" id="tema-painel-titulo"></div>
+              <div id="tema-painel-sub" style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:3px"></div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button class="btn btn-primary" style="font-size:12px" onclick="irParaKBDoTema()">
+                ◎ Ver Base de Conhecimento
+              </button>
+              <button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" onclick="fecharTemaPanel()">✕</button>
+            </div>
+          </div>
+          <div id="tema-painel-table"></div>
+        </div>
+      </div>
+
       <!-- STATS CARDS -->
       <div class="stats-grid">
         <div class="stat-card blue">
@@ -2059,7 +2078,83 @@ function fecharTabela() {
 }
 
 // Add click on tema card to filter by tema
-function filtrarPorTema(keys, nomeDoTema) { irParaKB(nomeDoTema); }
+// Tema atual selecionado
+let _temaAtualNome = '';
+let _temaAtualKeys = [];
+
+function filtrarPorTema(keys, nomeDoTema) {
+  abrirTemaPanel(nomeDoTema, keys);
+}
+
+function abrirTemaPanel(nomeDoTema, keys) {
+  _temaAtualNome = nomeDoTema;
+  _temaAtualKeys = keys || [];
+
+  // Filter chamados by tema keys
+  const chamadosTema = todosOsChamados.filter(c => {
+    const titulo = (c.Titulo || c.titulo || '').toLowerCase();
+    return _temaAtualKeys.some(k => titulo.includes(k));
+  });
+
+  // Update panel header
+  document.getElementById('tema-painel-titulo').textContent = nomeDoTema;
+  document.getElementById('tema-painel-sub').textContent = `${chamadosTema.length} chamados relacionados`;
+
+  // Render table
+  if (!chamadosTema.length) {
+    document.getElementById('tema-painel-table').innerHTML =
+      '<div class="empty"><div class="empty-icon">◫</div><div class="empty-text">Nenhum chamado encontrado neste tema.</div></div>';
+  } else {
+    const rows = chamadosTema.map(c => {
+      const status = c.Status || c.status || 'Aberto';
+      return `<tr>
+        <td class="num-cell">#${c.Numero || c.numero || '—'}</td>
+        <td>${c.Titulo || c.titulo || '—'}</td>
+        <td>${c.Data || c.data || '—'}</td>
+        <td><span class="badge ${status.toLowerCase()}">${status}</span></td>
+      </tr>`;
+    }).join('');
+
+    document.getElementById('tema-painel-table').innerHTML = `
+      <table>
+        <thead><tr>
+          <th>Número</th><th>Título</th><th>Data</th><th>Status</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }
+
+  // Show panel and scroll to it
+  document.getElementById('tema-painel').style.display = 'block';
+  setTimeout(() => {
+    document.getElementById('tema-painel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
+
+  // Highlight selected card
+  document.querySelectorAll('.tema-card').forEach(el => el.style.opacity = '0.5');
+  const idx = window._temaScores?.findIndex(t => t.nome === nomeDoTema);
+  if (idx >= 0) {
+    const cards = document.querySelectorAll('[data-tema-index]');
+    if (cards[idx]) {
+      cards[idx].style.opacity = '1';
+      cards[idx].style.borderColor = 'var(--accent)';
+    }
+  }
+}
+
+function fecharTemaPanel() {
+  document.getElementById('tema-painel').style.display = 'none';
+  _temaAtualNome = '';
+  _temaAtualKeys = [];
+  document.querySelectorAll('.tema-card').forEach(el => {
+    el.style.opacity = '1';
+    el.style.borderColor = '';
+  });
+}
+
+function irParaKBDoTema() {
+  irParaKB(_temaAtualNome);
+}
 
 function irParaKB(nomeDoTema) {
   kbFiltroAtivo = nomeDoTema || '';
