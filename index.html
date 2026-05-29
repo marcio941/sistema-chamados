@@ -666,7 +666,7 @@
         </div>
         <div class="form-group">
           <label>Cole o texto aqui</label>
-          <textarea id="lote-texto" style="min-height:200px" placeholder="Chamado#0802458 — Solicitação de rescisão&#10;Chamado#0802456 — Solicitação de rescisão&#10;Chamado#0800517 — LIBERAR VPN PARA COLABORADORA&#10;..."></textarea>
+          <textarea id="lote-texto" style="min-height:200px" placeholder="28/05          <textarea id="lote-texto" style="min-height:200px" placeholder="Chamado#0802458 — Solicitação de rescisão&#10;Chamado#0802456 — Solicitação de rescisão&#10;Chamado#0800517 — LIBERAR VPN PARA COLABORADORA&#10;..."></textarea>#10;Chamado#0802458 — Solicitação de rescisão          <textarea id="lote-texto" style="min-height:200px" placeholder="Chamado#0802458 — Solicitação de rescisão&#10;Chamado#0802456 — Solicitação de rescisão&#10;Chamado#0800517 — LIBERAR VPN PARA COLABORADORA&#10;..."></textarea>#10;Chamado#0802456 — Solicitação de rescisão          <textarea id="lote-texto" style="min-height:200px" placeholder="Chamado#0802458 — Solicitação de rescisão&#10;Chamado#0802456 — Solicitação de rescisão&#10;Chamado#0800517 — LIBERAR VPN PARA COLABORADORA&#10;..."></textarea>#10;          <textarea id="lote-texto" style="min-height:200px" placeholder="Chamado#0802458 — Solicitação de rescisão&#10;Chamado#0802456 — Solicitação de rescisão&#10;Chamado#0800517 — LIBERAR VPN PARA COLABORADORA&#10;..."></textarea>#10;27/05          <textarea id="lote-texto" style="min-height:200px" placeholder="Chamado#0802458 — Solicitação de rescisão&#10;Chamado#0802456 — Solicitação de rescisão&#10;Chamado#0800517 — LIBERAR VPN PARA COLABORADORA&#10;..."></textarea>#10;Chamado#0800517 — LIBERAR VPN          <textarea id="lote-texto" style="min-height:200px" placeholder="Chamado#0802458 — Solicitação de rescisão&#10;Chamado#0802456 — Solicitação de rescisão&#10;Chamado#0800517 — LIBERAR VPN PARA COLABORADORA&#10;..."></textarea>#10;..."></textarea>
         </div>
         <div id="preview-lote" style="margin-top:16px;display:none">
           <div class="form-card-title">Preview — <span id="preview-count">0</span> chamados encontrados</div>
@@ -740,9 +740,9 @@
 <script>
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 const N8N = {
-  registrar: 'https://n8n-n8n-editor.tkukfu.easypanel.host/webhook-test/registrar-chamado',
-  importar:  'https://n8n-n8n-editor.tkukfu.easypanel.host/webhook-test/importar-lote',
-  listar:    'https://n8n-n8n-editor.tkukfu.easypanel.host/webhook-test/listar-chamados'
+  registrar: 'https://n8n-n8n-editor.tkukfu.easypanel.host/webhook/registrar-chamado',
+  importar:  'https://n8n-n8n-editor.tkukfu.easypanel.host/webhook/importar-lote',
+  listar:    'https://n8n-n8n-editor.tkukfu.easypanel.host/webhook/listar-chamados'
 };
 
 let todosOsChamados = [];
@@ -880,41 +880,80 @@ function limparForm() {
 }
 
 // ─── IMPORTAR LOTE ────────────────────────────────────────────────────────────
+function parseLoteComDatas(texto) {
+  const linhas = texto.split('\n');
+  const chamados = [];
+  let dataAtual = new Date().toLocaleDateString('pt-BR');
+
+  for (const linha of linhas) {
+    const linhaTrim = linha.trim();
+    if (!linhaTrim) continue;
+
+    // Detecta data no formato DD/MM ou DD/MM/YYYY ou DD/MM/AAAA
+    const dataMatch = linhaTrim.match(/^(\d{1,2})\/(\d{2})(?:\/(\d{2,4}))?$/);
+    if (dataMatch) {
+      const dia = dataMatch[1].padStart(2, '0');
+      const mes = dataMatch[2];
+      const ano = dataMatch[3]
+        ? (dataMatch[3].length === 2 ? '20' + dataMatch[3] : dataMatch[3])
+        : new Date().getFullYear();
+      dataAtual = `${dia}/${mes}/${ano}`;
+      continue;
+    }
+
+    // Detecta chamado
+    const chamadoMatch = linhaTrim.match(/Chamado#(\d+)\s*[\u2013\u2014\-]\s*(.+)/u);
+    if (chamadoMatch) {
+      chamados.push({
+        data: dataAtual,
+        numero: chamadoMatch[1],
+        titulo: chamadoMatch[2].trim(),
+        categoria: 'Geral',
+        status: 'Aberto',
+        solucao: ''
+      });
+    }
+  }
+  return chamados;
+}
+
 function previewLote() {
   const texto = document.getElementById('lote-texto').value;
-  const matches = [...texto.matchAll(/Chamado#(\d+)\s*[–\-]\s*(.+)/g)];
+  const chamados = parseLoteComDatas(texto);
 
-  if (!matches.length) {
+  if (!chamados.length) {
     toast('Nenhum chamado encontrado no texto.', 'error'); return;
   }
 
-  const list = matches.map(m => `
-    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
-      <span class="num-cell">#${m[1]}</span>
-      <span style="font-size:13px;color:var(--text)">${m[2].trim()}</span>
+  const list = chamados.map(c => `
+    <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border)">
+      <span style="font-family:var(--mono);font-size:10px;color:var(--muted);min-width:80px">${c.data}</span>
+      <span class="num-cell">#${c.numero}</span>
+      <span style="font-size:13px;color:var(--text)">${c.titulo}</span>
     </div>
   `).join('');
 
-  document.getElementById('preview-count').textContent = matches.length;
+  document.getElementById('preview-count').textContent = chamados.length;
   document.getElementById('preview-list').innerHTML = list;
   document.getElementById('preview-lote').style.display = 'block';
 }
 
 async function importarLote() {
   const texto = document.getElementById('lote-texto').value.trim();
-  const data = document.getElementById('lote-data').value || new Date().toLocaleDateString('pt-BR');
-
   if (!texto) { toast('Cole o texto do bloco de notas!', 'error'); return; }
+
+  const chamados = parseLoteComDatas(texto);
+  if (!chamados.length) { toast('Nenhum chamado encontrado no texto.', 'error'); return; }
 
   try {
     const res = await fetch(N8N.importar, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ texto, data })
+      body: JSON.stringify({ texto, chamados })
     });
     const result = await res.json();
     if (result.success) {
-      toast('Lote importado com sucesso!');
+      toast(`${chamados.length} chamados importados com sucesso!`);
       document.getElementById('lote-texto').value = '';
       document.getElementById('preview-lote').style.display = 'none';
     } else {
