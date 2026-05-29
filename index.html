@@ -800,20 +800,35 @@ function renderTable(chamados) {
     return;
   }
 
-  const rows = chamados.map(c => `
-    <tr>
-      <td class="num-cell">#${c.Numero || c.numero || '—'}</td>
+  const rows = chamados.map((c, i) => {
+    const status = c.Status || c.status || 'Aberto';
+    const numero = c.Numero || c.numero || '';
+    return `
+    <tr id="row-${i}">
+      <td><input type="checkbox" class="row-check" data-index="${i}" style="accent-color:var(--accent);width:14px;height:14px;cursor:pointer"></td>
+      <td class="num-cell">#${numero}</td>
       <td>${c.Titulo || c.titulo || '—'}</td>
       <td>${c.Categoria || c.categoria || 'Geral'}</td>
       <td>${c.Data || c.data || '—'}</td>
-      <td><span class="badge ${(c.Status||'aberto').toLowerCase()}">${c.Status || 'Aberto'}</span></td>
+      <td>
+        <span class="badge ${status.toLowerCase()}" style="cursor:pointer" onclick="toggleStatus(${i})" title="Clique para alterar">
+          ${status}
+        </span>
+      </td>
     </tr>
-  `).join('');
+  `}).join('');
 
   document.getElementById('table-container').innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--surface2)">
+      <input type="checkbox" id="check-all" style="accent-color:var(--accent);width:14px;height:14px;cursor:pointer" onchange="toggleAll(this)">
+      <span style="font-family:var(--mono);font-size:11px;color:var(--muted)">SELECIONAR TODOS</span>
+      <button class="btn btn-ghost" style="margin-left:auto;font-size:11px;padding:5px 12px" onclick="marcarSelecionados('Resolvido')">✓ Marcar Resolvidos</button>
+      <button class="btn btn-ghost" style="font-size:11px;padding:5px 12px" onclick="marcarSelecionados('Aberto')">○ Marcar Abertos</button>
+    </div>
     <table>
       <thead>
         <tr>
+          <th style="width:40px"></th>
           <th>Número</th>
           <th>Título</th>
           <th>Categoria</th>
@@ -824,6 +839,33 @@ function renderTable(chamados) {
       <tbody>${rows}</tbody>
     </table>
   `;
+}
+
+function toggleStatus(index) {
+  const c = todosOsChamados[index];
+  const novoStatus = (c.Status || c.status || 'Aberto') === 'Resolvido' ? 'Aberto' : 'Resolvido';
+  todosOsChamados[index].Status = novoStatus;
+  todosOsChamados[index].status = novoStatus;
+  renderTable(todosOsChamados);
+  updateStats(todosOsChamados);
+  toast(`#${c.Numero || c.numero} marcado como ${novoStatus}`);
+}
+
+function toggleAll(el) {
+  document.querySelectorAll('.row-check').forEach(cb => cb.checked = el.checked);
+}
+
+function marcarSelecionados(novoStatus) {
+  const checks = document.querySelectorAll('.row-check:checked');
+  if (!checks.length) { toast('Selecione pelo menos um chamado!', 'error'); return; }
+  checks.forEach(cb => {
+    const i = parseInt(cb.dataset.index);
+    todosOsChamados[i].Status = novoStatus;
+    todosOsChamados[i].status = novoStatus;
+  });
+  renderTable(todosOsChamados);
+  updateStats(todosOsChamados);
+  toast(`${checks.length} chamado(s) marcado(s) como ${novoStatus}!`);
 }
 
 function filterTable() {
