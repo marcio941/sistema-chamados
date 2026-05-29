@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Central de Chamados</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #1a1a24;
+    --border: #2a2a3a;
+    --accent: #4f8ef7;
+    --accent2: #7c3aed;
+    --green: #22c55e;
+    --yellow: #f59e0b;
+    --red: #ef4444;
+    --text: #e8e8f0;
+    --muted: #6b6b80;
+    --mono: 'Space Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.3;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Glow blobs */
+  body::after {
+    content: '';
+    position: fixed;
+    top: -200px;
+    left: -200px;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(79,142,247,0.08) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app { position: relative; z-index: 1; display: flex; height: 100vh; }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 220px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 24px 0;
+    flex-shrink: 0;
+  }
+
+  .logo {
+    padding: 0 20px 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+
+  .logo-text {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  .logo-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text);
+    margin-top: 4px;
+    line-height: 1.1;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    border-left: 2px solid transparent;
+    transition: all 0.15s;
+    letter-spacing: 0.5px;
+  }
+
+  .nav-item:hover { color: var(--text); background: var(--surface2); }
+
+  .nav-item.active {
+    color: var(--accent);
+    border-left-color: var(--accent);
+    background: rgba(79,142,247,0.08);
+  }
+
+  .nav-icon { font-size: 16px; }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 16px 20px;
+    border-top: 1px solid var(--border);
+  }
+
+  .status-dot {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--green);
+  }
+
+  .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 6px var(--green);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* MAIN */
+  .main { flex: 1; overflow-y: auto; }
+
+  .page { display: none; padding: 32px; animation: fadeIn 0.2s ease; }
+  .page.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* PAGE HEADER */
+  .page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 28px;
+  }
+
+  .page-title {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--text);
+  }
+
+  .page-sub {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+    letter-spacing: 1px;
+  }
+
+  /* CARDS STATS */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+
+  .stat-card.blue::before { background: var(--accent); }
+  .stat-card.green::before { background: var(--green); }
+  .stat-card.yellow::before { background: var(--yellow); }
+
+  .stat-card:hover { border-color: var(--accent); }
+
+  .stat-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .stat-value {
+    font-size: 36px;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .stat-card.blue .stat-value { color: var(--accent); }
+  .stat-card.green .stat-value { color: var(--green); }
+  .stat-card.yellow .stat-value { color: var(--yellow); }
+
+  /* TABLE */
+  .table-wrapper {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .table-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .table-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: 0.5px;
+  }
+
+  .search-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 12px;
+  }
+
+  .search-box input {
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    width: 200px;
+  }
+
+  .search-box input::placeholder { color: var(--muted); }
+
+  table { width: 100%; border-collapse: collapse; }
+
+  thead tr { border-bottom: 1px solid var(--border); }
+
+  th {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 12px 20px;
+    text-align: left;
+    font-weight: 400;
+  }
+
+  td {
+    padding: 14px 20px;
+    font-size: 13px;
+    border-bottom: 1px solid rgba(42,42,58,0.5);
+    color: var(--text);
+  }
+
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface2); }
+
+  .num-cell {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+
+  .badge.aberto { background: rgba(79,142,247,0.12); color: var(--accent); }
+  .badge.resolvido { background: rgba(34,197,94,0.12); color: var(--green); }
+  .badge.pendente { background: rgba(245,158,11,0.12); color: var(--yellow); }
+
+  /* BUTTONS */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+    letter-spacing: 0.3px;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover { background: #3a7de8; transform: translateY(-1px); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { color: var(--text); border-color: var(--accent); }
+
+  .btn-danger {
+    background: rgba(239,68,68,0.1);
+    color: var(--red);
+    border: 1px solid rgba(239,68,68,0.3);
+  }
+  .btn-danger:hover { background: rgba(239,68,68,0.2); }
+
+  /* FORMS */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+
+  label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  input, select, textarea {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(79,142,247,0.1);
+  }
+
+  select option { background: var(--surface2); }
+  textarea { resize: vertical; min-height: 120px; font-family: var(--mono); font-size: 12px; }
+
+  .form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  .form-card-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* TOAST */
+  #toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 999;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    max-width: 320px;
+  }
+
+  #toast.show { transform: translateY(0); opacity: 1; }
+  #toast.success { border-color: var(--green); }
+  #toast.error { border-color: var(--red); }
+
+  /* LOADING */
+  .loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 12px;
+    gap: 10px;
+  }
+
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* KNOWLEDGE BASE */
+  .kb-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+
+  .kb-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    transition: border-color 0.2s;
+  }
+
+  .kb-card:hover { border-color: var(--accent); }
+
+  .kb-category {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .kb-problem {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
+  .kb-solution {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.6;
+    font-family: var(--mono);
+  }
+
+  .kb-related {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  /* EMPTY STATE */
+  .empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+
+  .empty-icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-text { font-size: 13px; font-family: var(--mono); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-text">sistema</div>
+      <div class="logo-title">Central de<br>Chamados</div>
+    </div>
+
+    <nav>
+      <div class="nav-item active" onclick="showPage('dashboard')">
+        <span class="nav-icon">◈</span> Dashboard
+      </div>
+      <div class="nav-item" onclick="showPage('novo')">
+        <span class="nav-icon">＋</span> Novo Chamado
+      </div>
+      <div class="nav-item" onclick="showPage('importar')">
+        <span class="nav-icon">⇪</span> Importar Lote
+      </div>
+      <div class="nav-item" onclick="showPage('conhecimento')">
+        <span class="nav-icon">◎</span> Base de Conhecimento
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="status-dot">
+        <span class="dot"></span>
+        N8N CONECTADO
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Dashboard</div>
+          <div class="page-sub">VISÃO GERAL DOS CHAMADOS</div>
+        </div>
+        <button class="btn btn-primary" onclick="loadChamados()">⟳ Atualizar</button>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card blue">
+          <div class="stat-label">Total de Chamados</div>
+          <div class="stat-value" id="stat-total">—</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-label">Resolvidos</div>
+          <div class="stat-value" id="stat-resolvidos">—</div>
+        </div>
+        <div class="stat-card yellow">
+          <div class="stat-label">Em Aberto</div>
+          <div class="stat-value" id="stat-abertos">—</div>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <div class="table-header">
+          <div class="table-title">Todos os Chamados</div>
+          <div class="search-box">
+            <span style="color:var(--muted);font-size:12px">⌕</span>
+            <input type="text" id="search-input" placeholder="Buscar chamado..." oninput="filterTable()">
+          </div>
+        </div>
+        <div id="table-container">
+          <div class="loading"><div class="spinner"></div> Carregando chamados...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOVO CHAMADO -->
+    <div class="page" id="page-novo">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Novo Chamado</div>
+          <div class="page-sub">REGISTRAR CHAMADO INDIVIDUAL</div>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <div class="form-card-title">Dados do Chamado</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Número do Chamado</label>
+            <input type="text" id="f-numero" placeholder="0802458">
+          </div>
+          <div class="form-group">
+            <label>Data</label>
+            <input type="date" id="f-data">
+          </div>
+          <div class="form-group full">
+            <label>Título / Descrição</label>
+            <input type="text" id="f-titulo" placeholder="Descrição do chamado">
+          </div>
+          <div class="form-group">
+            <label>Categoria</label>
+            <select id="f-categoria">
+              <option value="Geral">Geral</option>
+              <option value="Acesso">Acesso</option>
+              <option value="TI">TI</option>
+              <option value="RH">RH</option>
+              <option value="RENAVE">RENAVE</option>
+              <option value="Dealer">Dealer</option>
+              <option value="Email">Email</option>
+              <option value="VPN">VPN</option>
+              <option value="Impressora">Impressora</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="f-status">
+              <option value="Aberto">Aberto</option>
+              <option value="Resolvido">Resolvido</option>
+              <option value="Pendente">Pendente</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label>Solução (opcional)</label>
+            <textarea id="f-solucao" placeholder="Descreva a solução aplicada..."></textarea>
+          </div>
+        </div>
+        <div style="margin-top:20px; display:flex; gap:10px;">
+          <button class="btn btn-primary" onclick="registrarChamado()">✓ Salvar Chamado</button>
+          <button class="btn btn-ghost" onclick="limparForm()">Limpar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- IMPORTAR LOTE -->
+    <div class="page" id="page-importar">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Importar Lote</div>
+          <div class="page-sub">COLE O TEXTO DO BLOCO DE NOTAS</div>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <div class="form-card-title">Texto do Bloco de Notas</div>
+        <div class="form-group" style="margin-bottom:16px">
+          <label>Data dos Chamados</label>
+          <input type="date" id="lote-data" style="max-width:200px">
+        </div>
+        <div class="form-group">
+          <label>Cole o texto aqui</label>
+          <textarea id="lote-texto" style="min-height:200px" placeholder="Chamado#0802458 — Solicitação de rescisão&#10;Chamado#0802456 — Solicitação de rescisão&#10;Chamado#0800517 — LIBERAR VPN PARA COLABORADORA&#10;..."></textarea>
+        </div>
+        <div id="preview-lote" style="margin-top:16px;display:none">
+          <div class="form-card-title">Preview — <span id="preview-count">0</span> chamados encontrados</div>
+          <div id="preview-list"></div>
+        </div>
+        <div style="margin-top:20px; display:flex; gap:10px;">
+          <button class="btn btn-ghost" onclick="previewLote()">⊡ Preview</button>
+          <button class="btn btn-primary" onclick="importarLote()">⇪ Importar Tudo</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- BASE DE CONHECIMENTO -->
+    <div class="page" id="page-conhecimento">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Base de Conhecimento</div>
+          <div class="page-sub">PROBLEMAS E SOLUÇÕES</div>
+        </div>
+        <button class="btn btn-primary" onclick="showAddKB()">＋ Adicionar</button>
+      </div>
+
+      <div class="form-card" id="form-kb" style="display:none">
+        <div class="form-card-title">Nova Entrada</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Categoria</label>
+            <select id="kb-categoria">
+              <option>Acesso</option><option>TI</option><option>RH</option>
+              <option>RENAVE</option><option>Dealer</option><option>Email</option>
+              <option>VPN</option><option>Impressora</option><option>Geral</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Chamados Relacionados</label>
+            <input type="text" id="kb-relacionados" placeholder="#0802458, #0802456">
+          </div>
+          <div class="form-group full">
+            <label>Problema</label>
+            <input type="text" id="kb-problema" placeholder="Descrição do problema">
+          </div>
+          <div class="form-group full">
+            <label>Solução</label>
+            <textarea id="kb-solucao" style="min-height:80px" placeholder="Passo a passo da solução..."></textarea>
+          </div>
+        </div>
+        <div style="margin-top:16px; display:flex; gap:10px;">
+          <button class="btn btn-primary" onclick="salvarKB()">✓ Salvar</button>
+          <button class="btn btn-ghost" onclick="document.getElementById('form-kb').style.display='none'">Cancelar</button>
+        </div>
+      </div>
+
+      <div class="form-card" style="padding:12px 20px; margin-bottom:20px;">
+        <div class="search-box" style="background:transparent; border:none; padding:0;">
+          <span style="color:var(--muted);font-size:14px">⌕</span>
+          <input type="text" id="kb-search" placeholder="Buscar na base de conhecimento..." oninput="filterKB()" style="background:transparent; border:none; box-shadow:none; font-size:14px;">
+        </div>
+      </div>
+
+      <div class="kb-grid" id="kb-grid">
+        <div class="loading"><div class="spinner"></div> Carregando...</div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+// ─── CONFIG ───────────────────────────────────────────────────────────────────
+const N8N = {
+  registrar: 'https://n8n-n8n-editor.tkukfu.easypanel.host/webhook-test/registrar-chamado',
+  importar:  'https://n8n-n8n-editor.tkukfu.easypanel.host/webhook-test/importar-lote',
+  listar:    'https://n8n-n8n-editor.tkukfu.easypanel.host/webhook-test/listar-chamados'
+};
+
+let todosOsChamados = [];
+let kbData = JSON.parse(localStorage.getItem('kb_data') || '[]');
+
+// ─── NAVIGATION ───────────────────────────────────────────────────────────────
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  event.currentTarget.classList.add('active');
+
+  if (id === 'dashboard') loadChamados();
+  if (id === 'conhecimento') renderKB();
+}
+
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+function toast(msg, type = 'success') {
+  const el = document.getElementById('toast');
+  const icon = type === 'success' ? '✓' : '✕';
+  el.innerHTML = `<span style="color:${type==='success'?'var(--green)':'var(--red)'}">${icon}</span> ${msg}`;
+  el.className = `show ${type}`;
+  setTimeout(() => { el.className = ''; }, 3500);
+}
+
+// ─── LOAD CHAMADOS ────────────────────────────────────────────────────────────
+async function loadChamados() {
+  document.getElementById('table-container').innerHTML =
+    '<div class="loading"><div class="spinner"></div> Carregando chamados...</div>';
+
+  try {
+    const res = await fetch(N8N.listar);
+    const data = await res.json();
+    todosOsChamados = data.chamados || [];
+    renderTable(todosOsChamados);
+    updateStats(todosOsChamados);
+  } catch(e) {
+    document.getElementById('table-container').innerHTML =
+      '<div class="empty"><div class="empty-icon">⚠</div><div class="empty-text">Erro ao conectar com N8N.<br>Verifique se o workflow está ativo.</div></div>';
+  }
+}
+
+function updateStats(chamados) {
+  document.getElementById('stat-total').textContent = chamados.length;
+  document.getElementById('stat-resolvidos').textContent =
+    chamados.filter(c => c.Status === 'Resolvido').length;
+  document.getElementById('stat-abertos').textContent =
+    chamados.filter(c => c.Status === 'Aberto' || !c.Status).length;
+}
+
+function renderTable(chamados) {
+  if (!chamados.length) {
+    document.getElementById('table-container').innerHTML =
+      '<div class="empty"><div class="empty-icon">◫</div><div class="empty-text">Nenhum chamado encontrado.</div></div>';
+    return;
+  }
+
+  const rows = chamados.map(c => `
+    <tr>
+      <td class="num-cell">#${c.Numero || c.numero || '—'}</td>
+      <td>${c.Titulo || c.titulo || '—'}</td>
+      <td>${c.Categoria || c.categoria || 'Geral'}</td>
+      <td>${c.Data || c.data || '—'}</td>
+      <td><span class="badge ${(c.Status||'aberto').toLowerCase()}">${c.Status || 'Aberto'}</span></td>
+    </tr>
+  `).join('');
+
+  document.getElementById('table-container').innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Número</th>
+          <th>Título</th>
+          <th>Categoria</th>
+          <th>Data</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+function filterTable() {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  const filtrados = todosOsChamados.filter(c =>
+    (c.Numero||'').toLowerCase().includes(q) ||
+    (c.Titulo||'').toLowerCase().includes(q) ||
+    (c.Categoria||'').toLowerCase().includes(q)
+  );
+  renderTable(filtrados);
+}
+
+// ─── REGISTRAR CHAMADO ────────────────────────────────────────────────────────
+async function registrarChamado() {
+  const numero = document.getElementById('f-numero').value.trim();
+  const titulo = document.getElementById('f-titulo').value.trim();
+
+  if (!numero || !titulo) {
+    toast('Preencha o número e o título!', 'error'); return;
+  }
+
+  const payload = {
+    numero,
+    titulo,
+    data: document.getElementById('f-data').value || new Date().toLocaleDateString('pt-BR'),
+    categoria: document.getElementById('f-categoria').value,
+    status: document.getElementById('f-status').value,
+    solucao: document.getElementById('f-solucao').value
+  };
+
+  try {
+    const res = await fetch(N8N.registrar, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.success) {
+      toast('Chamado #' + numero + ' salvo com sucesso!');
+      limparForm();
+    } else {
+      toast('Erro ao salvar chamado.', 'error');
+    }
+  } catch(e) {
+    toast('Erro de conexão com N8N.', 'error');
+  }
+}
+
+function limparForm() {
+  ['f-numero','f-titulo','f-solucao'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-data').value = '';
+  document.getElementById('f-categoria').value = 'Geral';
+  document.getElementById('f-status').value = 'Aberto';
+}
+
+// ─── IMPORTAR LOTE ────────────────────────────────────────────────────────────
+function previewLote() {
+  const texto = document.getElementById('lote-texto').value;
+  const matches = [...texto.matchAll(/Chamado#(\d+)\s*[–\-]\s*(.+)/g)];
+
+  if (!matches.length) {
+    toast('Nenhum chamado encontrado no texto.', 'error'); return;
+  }
+
+  const list = matches.map(m => `
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+      <span class="num-cell">#${m[1]}</span>
+      <span style="font-size:13px;color:var(--text)">${m[2].trim()}</span>
+    </div>
+  `).join('');
+
+  document.getElementById('preview-count').textContent = matches.length;
+  document.getElementById('preview-list').innerHTML = list;
+  document.getElementById('preview-lote').style.display = 'block';
+}
+
+async function importarLote() {
+  const texto = document.getElementById('lote-texto').value.trim();
+  const data = document.getElementById('lote-data').value || new Date().toLocaleDateString('pt-BR');
+
+  if (!texto) { toast('Cole o texto do bloco de notas!', 'error'); return; }
+
+  try {
+    const res = await fetch(N8N.importar, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ texto, data })
+    });
+    const result = await res.json();
+    if (result.success) {
+      toast('Lote importado com sucesso!');
+      document.getElementById('lote-texto').value = '';
+      document.getElementById('preview-lote').style.display = 'none';
+    } else {
+      toast('Erro ao importar lote.', 'error');
+    }
+  } catch(e) {
+    toast('Erro de conexão com N8N.', 'error');
+  }
+}
+
+// ─── BASE DE CONHECIMENTO ─────────────────────────────────────────────────────
+function showAddKB() {
+  document.getElementById('form-kb').style.display = 'block';
+  document.getElementById('form-kb').scrollIntoView({ behavior: 'smooth' });
+}
+
+function salvarKB() {
+  const problema = document.getElementById('kb-problema').value.trim();
+  const solucao = document.getElementById('kb-solucao').value.trim();
+  if (!problema || !solucao) { toast('Preencha o problema e a solução!', 'error'); return; }
+
+  const item = {
+    id: Date.now(),
+    categoria: document.getElementById('kb-categoria').value,
+    problema,
+    solucao,
+    relacionados: document.getElementById('kb-relacionados').value
+  };
+
+  kbData.unshift(item);
+  localStorage.setItem('kb_data', JSON.stringify(kbData));
+  toast('Entrada salva na base de conhecimento!');
+  document.getElementById('form-kb').style.display = 'none';
+  renderKB();
+
+  // Limpa o form
+  ['kb-problema','kb-solucao','kb-relacionados'].forEach(id => document.getElementById(id).value = '');
+}
+
+function renderKB(filtro = '') {
+  const dados = filtro
+    ? kbData.filter(k =>
+        k.problema.toLowerCase().includes(filtro) ||
+        k.solucao.toLowerCase().includes(filtro) ||
+        k.categoria.toLowerCase().includes(filtro))
+    : kbData;
+
+  if (!dados.length) {
+    document.getElementById('kb-grid').innerHTML =
+      '<div class="empty" style="grid-column:1/-1"><div class="empty-icon">◎</div><div class="empty-text">Nenhuma entrada na base de conhecimento.<br>Clique em "+ Adicionar" para começar.</div></div>';
+    return;
+  }
+
+  document.getElementById('kb-grid').innerHTML = dados.map(k => `
+    <div class="kb-card">
+      <div class="kb-category">${k.categoria}</div>
+      <div class="kb-problem">${k.problema}</div>
+      <div class="kb-solution">${k.solucao}</div>
+      ${k.relacionados ? `<div class="kb-related">Chamados: ${k.relacionados}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+function filterKB() {
+  const q = document.getElementById('kb-search').value.toLowerCase();
+  renderKB(q);
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+document.getElementById('f-data').value = new Date().toISOString().split('T')[0];
+document.getElementById('lote-data').value = new Date().toISOString().split('T')[0];
+loadChamados();
+</script>
+</body>
+</html>
