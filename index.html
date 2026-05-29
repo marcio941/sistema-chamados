@@ -975,7 +975,7 @@
 <div class="app">
   <!-- SIDEBAR -->
   <aside class="sidebar">
-    <div class="logo">
+    <div class="logo" onclick="irParaDashboard()" style="cursor:pointer" title="Voltar ao Dashboard">
       <div class="logo-text">sistema</div>
       <div class="logo-title">Central de<br>Chamados</div>
     </div>
@@ -2044,6 +2044,14 @@ function renderTemas(chamados) {
   }, 100);
 }
 
+
+function irParaDashboard() {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-dashboard').classList.add('active');
+  document.querySelectorAll('.nav-item')[0]?.classList.add('active');
+  window.scrollTo(0, 0);
+}
 
 function fecharTabela() {
   document.getElementById('table-section').style.display = 'none';
