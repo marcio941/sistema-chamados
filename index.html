@@ -316,6 +316,8 @@
 
   tr:last-child td { border-bottom: none; }
   tr:hover td { background: var(--surface2); }
+  tr[data-row-index]:hover td { background: rgba(79,142,247,0.08) !important; }
+  tr[data-row-index]:hover .num-cell { color: var(--green) !important; }
 
   .num-cell {
     font-family: var(--mono);
@@ -1504,20 +1506,26 @@ function renderTable(chamados) {
     return;
   }
 
+  // Store filtered list globally for row click
+  window._chamadosVisiveis = chamados;
+
   const rows = chamados.map((c, i) => {
     const status = c.Status || c.status || 'Aberto';
     const numero = c.Numero || c.numero || '';
     return `
-    <tr id="row-${i}">
-      <td><input type="checkbox" class="row-check" data-index="${i}" style="accent-color:var(--accent);width:14px;height:14px;cursor:pointer"></td>
+    <tr id="row-${i}" style="cursor:pointer" data-row-index="${i}" title="Clique para criar instrução na Base de Conhecimento">
+      <td><input type="checkbox" class="row-check" data-index="${i}" style="accent-color:var(--accent);width:14px;height:14px;cursor:pointer" onclick="event.stopPropagation()"></td>
       <td class="num-cell">#${numero}</td>
       <td>${c.Titulo || c.titulo || '—'}</td>
       <td>${c.Categoria || c.categoria || 'Geral'}</td>
       <td>${c.Data || c.data || '—'}</td>
       <td>
-        <span class="badge ${status.toLowerCase()}" style="cursor:pointer" onclick="toggleStatus(${i})" title="Clique para alterar">
+        <span class="badge ${status.toLowerCase()}" style="cursor:pointer" onclick="toggleStatus(${i});event.stopPropagation()" title="Alterar status">
           ${status}
         </span>
+      </td>
+      <td>
+        <span style="font-family:var(--mono);font-size:10px;color:var(--accent);white-space:nowrap">+ KB</span>
       </td>
     </tr>
   `}).join('');
@@ -1538,11 +1546,14 @@ function renderTable(chamados) {
           <th>Categoria</th>
           <th>Data</th>
           <th>Status</th>
+          <th style="width:50px;font-family:var(--mono);font-size:9px;color:var(--accent)">KB</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
     </table>
   `;
+  // Add row click listeners via event delegation
+  setTimeout(addRowClickListeners, 50);
 }
 
 function toggleStatus(index) {
@@ -1570,6 +1581,62 @@ function marcarSelecionados(novoStatus) {
   renderTable(todosOsChamados);
   updateStats(todosOsChamados);
   toast(`${checks.length} chamado(s) marcado(s) como ${novoStatus}!`);
+}
+
+function addRowClickListeners() {
+  // Use event delegation on tbody
+  const container = document.getElementById('table-container');
+  if (!container) return;
+  container.addEventListener('click', function(e) {
+    const row = e.target.closest('tr[data-row-index]');
+    if (!row) return;
+    if (e.target.closest('.row-check') || e.target.closest('.badge')) return;
+    const idx = parseInt(row.dataset.rowIndex);
+    const c = window._chamadosVisiveis?.[idx];
+    if (c) abrirKBParaChamado(c);
+  }, { once: true });
+}
+
+function abrirKBParaChamado(c) {
+  const numero = c.Numero || c.numero || '';
+  const titulo = c.Titulo || c.titulo || '';
+  const data = c.Data || c.data || '';
+  const categoria = c.Categoria || c.categoria || 'Geral';
+
+  // Map categoria to KB category
+  const catMap = {
+    'Geral': 'Acesso / Senha', 'Acesso': 'Acesso / Senha',
+  };
+
+  // Navigate to KB
+  kbFiltroAtivo = '';
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-conhecimento').classList.add('active');
+  document.querySelectorAll('.nav-item')[3]?.classList.add('active');
+  window.scrollTo(0, 0);
+
+  // Pre-fill form
+  document.getElementById('kb-problema').value = titulo;
+  document.getElementById('kb-relacionados').value = '#' + numero + (data ? ' — ' + data : '');
+  document.getElementById('kb-solucao').value = '';
+  kbImagens = [];
+  document.getElementById('kb-img-previews').innerHTML = '';
+  document.getElementById('kb-img-placeholder').style.display = 'flex';
+  kbEditId = null;
+
+  // Show form
+  document.getElementById('form-kb').style.display = 'block';
+  document.getElementById('form-kb-title').textContent = 'Nova Instrução — #' + numero;
+  document.getElementById('kb-sub').textContent = 'CRIAR INSTRUÇÃO DE TRABALHO';
+
+  renderKB();
+
+  setTimeout(() => {
+    document.getElementById('form-kb').scrollIntoView({ behavior: 'smooth' });
+  }, 200);
+
+  toast('Chamado #' + numero + ' carregado. Preencha a solução!');
 }
 
 function filterTable() {
