@@ -442,16 +442,30 @@ function toggleTema() {
 
 // LOAD CHAMADOS
 async function loadChamados() {
-  document.getElementById('stat-total').textContent='—';
+  document.getElementById('stat-total').textContent='...';
   try {
-    const res=await fetch(N8N.listar);
-    const data=await res.json();
-    todosOsChamados=data.chamados||[];
+    const res=await fetch(N8N.listar, {
+      method:'GET',
+      headers:{'Accept':'application/json'},
+      mode:'cors'
+    });
+    const text=await res.text();
+    let data;
+    try { data=JSON.parse(text); } catch(e) { data={chamados:[]}; }
+    // Handle different response formats
+    let chamados=[];
+    if(Array.isArray(data)) chamados=data;
+    else if(data.chamados) chamados=data.chamados;
+    else if(data[0]?.chamados) chamados=data[0].chamados;
+    else chamados=Object.values(data).find(v=>Array.isArray(v))||[];
+    todosOsChamados=chamados;
     chamadosFiltrados=[...todosOsChamados];
     updateStats(todosOsChamados);
     renderTemas(todosOsChamados);
+    if(chamados.length===0) toast('Nenhum chamado carregado — verifique o N8N','error');
   } catch(e) {
-    toast('Erro ao conectar com N8N','error');
+    console.error('Erro N8N:',e);
+    toast('Erro ao conectar com N8N: '+e.message,'error');
   }
 }
 
