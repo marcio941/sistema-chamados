@@ -2008,8 +2008,11 @@ function renderTemas(chamados) {
   const colors = ['var(--accent)','var(--green)','var(--yellow)','var(--red)','var(--accent2)',
     '#06b6d4','#f97316','#8b5cf6','#ec4899','#14b8a6','#f59e0b','#84cc16'];
 
+  // Store scores globally for click handler
+  window._temaScores = scores;
+
   document.getElementById('temas-grid').innerHTML = scores.slice(0, 9).map((t, i) => `
-    <div class="tema-card" style="cursor:pointer" onclick="filtrarPorTema(${JSON.stringify(t.keys)}, '${t.nome}')" title="Clique para abrir na Base de Conhecimento">
+    <div class="tema-card" style="cursor:pointer" data-tema-index="${i}" title="Clique para abrir na Base de Conhecimento">
       <div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:${colors[i % colors.length]}"></div>
       <div style="display:flex;align-items:center;justify-content:space-between">
         <div class="tema-name">${t.nome}</div>
@@ -2019,10 +2022,19 @@ function renderTemas(chamados) {
         <div class="tema-count" style="color:${colors[i % colors.length]}">${t.count}</div>
         <div class="tema-pct">${Math.round(t.count/total*100)}% do total</div>
       </div>
-      <div class="tema-bar"><div class="tema-bar-fill" style="width:0;background:${colors[i % colors.length]}" data-w="${t.count/maxCount*100}" data-keys='${JSON.stringify(t.keys)}'></div></div>
+      <div class="tema-bar"><div class="tema-bar-fill" style="width:0;background:${colors[i % colors.length]}" data-w="${t.count/maxCount*100}"></div></div>
       ${t.exemplos[0] ? `<div class="tema-examples">${t.exemplos[0].slice(0,45)}${t.exemplos[0].length>45?'...':''}</div>` : ''}
     </div>
   `).join('');
+
+  // Add click listeners after rendering
+  document.querySelectorAll('[data-tema-index]').forEach(el => {
+    el.addEventListener('click', function() {
+      const idx = parseInt(this.dataset.temaIndex);
+      const tema = window._temaScores[idx];
+      if (tema) irParaKB(tema.nome);
+    });
+  });
 
   // Animate bars
   setTimeout(() => {
@@ -2039,20 +2051,21 @@ function fecharTabela() {
 }
 
 // Add click on tema card to filter by tema
-function filtrarPorTema(keys, nomeDoTema) {
-  // Navigate to KB page filtered by tema
+function filtrarPorTema(keys, nomeDoTema) { irParaKB(nomeDoTema); }
+
+function irParaKB(nomeDoTema) {
   kbFiltroAtivo = nomeDoTema || '';
   renderKB();
-  // Switch to KB page
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('page-conhecimento').classList.add('active');
   document.querySelectorAll('.nav-item')[3]?.classList.add('active');
-  // Update sub
-  document.getElementById('kb-sub').textContent = nomeDoTema ? `TEMA: ${nomeDoTema.toUpperCase()}` : 'INSTRUÇÕES DE TRABALHO';
-  // Pre-select category for new entries
-  if (nomeDoTema) document.getElementById('kb-categoria').value = nomeDoTema;
-  window.scrollTo(0,0);
+  document.getElementById('kb-sub').textContent = nomeDoTema ? 'TEMA: ' + nomeDoTema.toUpperCase() : 'INSTRUÇÕES DE TRABALHO';
+  if (nomeDoTema) {
+    const sel = document.getElementById('kb-categoria');
+    if (sel) sel.value = nomeDoTema;
+  }
+  window.scrollTo(0, 0);
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
