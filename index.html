@@ -1349,7 +1349,7 @@
       <!-- SUBTEMAS (palavras mais frequentes) -->
       <div class="table-wrapper" style="padding:16px 20px;margin-bottom:20px">
         <div class="table-title" style="margin-bottom:12px">VARIAÇÕES MAIS COMUNS</div>
-        <div id="sub-variações" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+        <div id="sub-variacoes" style="display:flex;flex-wrap:wrap;gap:8px"></div>
       </div>
 
       <!-- LISTA DE CHAMADOS -->
@@ -2305,14 +2305,15 @@ function abrirTemaPanel(nomeDoTema, keys) {
     });
   });
   const topWords = Object.entries(wordCount).sort((a,b) => b[1]-a[1]).slice(0, 12);
-  document.getElementById('sub-variações').innerHTML = topWords.map(([w, n]) =>
-    `<div style="padding:5px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;font-family:var(--mono);font-size:11px;color:var(--text);cursor:pointer;transition:all 0.15s"
-      onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
-      onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text)'"
-      onclick="filtrarSubPorPalavra('${w}')">
-      ${w} <span style="color:var(--muted)">(${n})</span>
-    </div>`
-  ).join('');
+  document.getElementById('sub-variacoes').innerHTML = topWords.map(([w, n]) => {
+    const div = document.createElement('div');
+    div.style.cssText = 'padding:5px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;font-family:var(--mono);font-size:11px;color:var(--text);cursor:pointer;transition:all 0.15s;display:inline-block';
+    div.innerHTML = w + ' <span style="color:var(--muted)">(' + n + ')</span>';
+    div.onmouseover = function() { this.style.borderColor='var(--accent)'; this.style.color='var(--accent)'; };
+    div.onmouseout = function() { this.style.borderColor='var(--border)'; this.style.color='var(--text)'; };
+    div.onclick = function() { filtrarSubPorPalavra(w); };
+    return div.outerHTML;
+  }).join('');
 
   // Render table
   renderSubTabela(_subChamados);
@@ -2408,39 +2409,6 @@ document.getElementById('lote-data').value = new Date().toISOString().split('T')
 loadChamados();
 renderKB();
 </script>
-
-<!-- MODAL TEMA -->
-<div id="tema-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;align-items:center;justify-content:center;padding:20px" onclick="fecharTemaModal(event)">
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;width:100%;max-width:780px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;position:relative" onclick="event.stopPropagation()">
-    
-    <!-- Modal Header -->
-    <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-shrink:0">
-      <div style="flex:1">
-        <div id="modal-tema-nome" style="font-size:18px;font-weight:800;color:var(--text)"></div>
-        <div id="modal-tema-sub" style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:3px"></div>
-      </div>
-      <button class="btn btn-primary" style="font-size:12px;flex-shrink:0" onclick="irParaKBDoTema()">◎ Base de Conhecimento</button>
-      <button onclick="fecharTemaModal()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:4px;line-height:1">✕</button>
-    </div>
-
-    <!-- Search inside modal -->
-    <div style="padding:12px 24px;border-bottom:1px solid var(--border);flex-shrink:0">
-      <div class="search-box" style="background:var(--surface2)">
-        <span style="color:var(--muted);font-size:12px">⌕</span>
-        <input type="text" id="modal-search" placeholder="Buscar neste tema..." oninput="filtrarModalTabela()" style="width:100%">
-      </div>
-    </div>
-
-    <!-- Table -->
-    <div style="overflow-y:auto;flex:1" id="modal-table-container"></div>
-
-    <!-- Footer -->
-    <div style="padding:14px 24px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--surface2)">
-      <span id="modal-footer-count" style="font-family:var(--mono);font-size:11px;color:var(--muted)"></span>
-      <button class="btn btn-ghost" style="font-size:11px" onclick="fecharTemaModal()">Fechar</button>
-    </div>
-  </div>
-</div>
 
 <!-- LIGHTBOX -->
 <div id="lightbox" onclick="closeLightbox()">
