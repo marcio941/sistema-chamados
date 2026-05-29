@@ -1310,7 +1310,63 @@
       </div>
     </div>
 
+    <!-- SUBDASHBOARD DO TEMA -->
+    <div class="page" id="page-subtema">
+      <div class="page-header">
+        <div style="display:flex;align-items:center;gap:12px">
+          <button onclick="irParaDashboard()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 12px;cursor:pointer;color:var(--muted);font-family:var(--mono);font-size:11px;display:flex;align-items:center;gap:6px">
+            ← VOLTAR
+          </button>
+          <div>
+            <div class="page-title" id="sub-tema-titulo"></div>
+            <div class="page-sub" id="sub-tema-sub"></div>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="irParaKBDoTema()">◎ Base de Conhecimento</button>
+      </div>
+
+      <!-- MINI STATS -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">
+        <div class="stat-card blue">
+          <div class="stat-label">Total</div>
+          <div class="stat-value" id="sub-stat-total" style="font-size:28px">—</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-label">Resolvidos</div>
+          <div class="stat-value" id="sub-stat-resolvidos" style="font-size:28px">—</div>
+        </div>
+        <div class="stat-card yellow">
+          <div class="stat-label">Em Aberto</div>
+          <div class="stat-value" id="sub-stat-abertos" style="font-size:28px">—</div>
+        </div>
+        <div class="stat-card" style="border-color:var(--accent2)">
+          <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--accent2)"></div>
+          <div class="stat-label">Mais Recente</div>
+          <div id="sub-stat-recente" style="font-size:13px;font-weight:700;color:var(--accent2);margin-top:8px;font-family:var(--mono)">—</div>
+        </div>
+      </div>
+
+      <!-- SUBTEMAS (palavras mais frequentes) -->
+      <div class="table-wrapper" style="padding:16px 20px;margin-bottom:20px">
+        <div class="table-title" style="margin-bottom:12px">VARIAÇÕES MAIS COMUNS</div>
+        <div id="sub-variações" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+      </div>
+
+      <!-- LISTA DE CHAMADOS -->
+      <div class="table-wrapper">
+        <div class="table-header">
+          <div class="table-title">Chamados deste Tema</div>
+          <div class="search-box">
+            <span style="color:var(--muted);font-size:12px">⌕</span>
+            <input type="text" id="sub-search" placeholder="Buscar..." oninput="filtrarSubTabela()">
+          </div>
+        </div>
+        <div id="sub-table"></div>
+      </div>
+    </div>
+
     <!-- BASE DE CONHECIMENTO -->
+    <div class="page" id="page-conhecimento">    <!-- BASE DE CONHECIMENTO -->
     <div class="page" id="page-conhecimento">
       <div class="page-header">
         <div>
@@ -2212,87 +2268,122 @@ function filtrarPorTema(keys, nomeDoTema) {
   abrirTemaPanel(nomeDoTema, keys);
 }
 
-let _modalChamados = [];
+let _subChamados = [];
 
 function abrirTemaPanel(nomeDoTema, keys) {
   _temaAtualNome = nomeDoTema;
   _temaAtualKeys = keys || [];
 
-  _modalChamados = todosOsChamados.filter(c => {
+  _subChamados = todosOsChamados.filter(c => {
     const titulo = (c.Titulo || c.titulo || '').toLowerCase();
     return _temaAtualKeys.some(k => titulo.includes(k));
   });
 
-  document.getElementById('modal-tema-nome').textContent = nomeDoTema;
-  document.getElementById('modal-tema-sub').textContent = _modalChamados.length + ' chamados relacionados';
-  document.getElementById('modal-search').value = '';
-  renderModalTabela(_modalChamados);
+  // Update subdashboard header
+  document.getElementById('sub-tema-titulo').textContent = nomeDoTema;
+  document.getElementById('sub-tema-sub').textContent = _subChamados.length + ' CHAMADOS ENCONTRADOS';
 
-  const overlay = document.getElementById('tema-modal-overlay');
-  overlay.style.display = 'flex';
-  document.body.style.overflow = 'hidden';
+  // Mini stats
+  const total = _subChamados.length;
+  const resolvidos = _subChamados.filter(c => (c.Status||c.status) === 'Resolvido').length;
+  const abertos = _subChamados.filter(c => (c.Status||c.status) !== 'Resolvido').length;
+  const recente = _subChamados[0]?.Data || _subChamados[0]?.data || '—';
+
+  document.getElementById('sub-stat-total').textContent = total;
+  document.getElementById('sub-stat-resolvidos').textContent = resolvidos;
+  document.getElementById('sub-stat-abertos').textContent = abertos;
+  document.getElementById('sub-stat-recente').textContent = recente;
+
+  // Word frequency for variações
+  const wordCount = {};
+  _subChamados.forEach(c => {
+    const titulo = (c.Titulo || c.titulo || '').toLowerCase();
+    titulo.split(/[\s\/\-–]+/).forEach(w => {
+      if (w.length > 3 && !['para','pelo','pela','com','sem','não','nao','uma','que','por','dos','das','nos','nas','num'].includes(w)) {
+        wordCount[w] = (wordCount[w] || 0) + 1;
+      }
+    });
+  });
+  const topWords = Object.entries(wordCount).sort((a,b) => b[1]-a[1]).slice(0, 12);
+  document.getElementById('sub-variações').innerHTML = topWords.map(([w, n]) =>
+    `<div style="padding:5px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;font-family:var(--mono);font-size:11px;color:var(--text);cursor:pointer;transition:all 0.15s"
+      onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
+      onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text)'"
+      onclick="filtrarSubPorPalavra('${w}')">
+      ${w} <span style="color:var(--muted)">(${n})</span>
+    </div>`
+  ).join('');
+
+  // Render table
+  renderSubTabela(_subChamados);
+
+  // Navigate to subdashboard page
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-subtema').classList.add('active');
+  window.scrollTo(0, 0);
 }
 
-function renderModalTabela(chamados) {
-  document.getElementById('modal-footer-count').textContent = chamados.length + ' chamados';
-
+function renderSubTabela(chamados) {
   if (!chamados.length) {
-    document.getElementById('modal-table-container').innerHTML =
+    document.getElementById('sub-table').innerHTML =
       '<div class="empty"><div class="empty-icon">◫</div><div class="empty-text">Nenhum chamado encontrado.</div></div>';
     return;
   }
 
   const rows = chamados.map((c, i) => {
     const status = c.Status || c.status || 'Aberto';
-    return `<tr data-modal-index="${i}" style="cursor:pointer" title="Clique para criar instrução">
+    return `<tr data-sub-index="${i}" style="cursor:pointer" title="Clique para abrir na Base de Conhecimento">
       <td class="num-cell">#${c.Numero || c.numero || '—'}</td>
       <td>${c.Titulo || c.titulo || '—'}</td>
-      <td style="white-space:nowrap">${c.Data || c.data || '—'}</td>
+      <td style="white-space:nowrap;font-family:var(--mono);font-size:11px">${c.Data || c.data || '—'}</td>
       <td><span class="badge ${status.toLowerCase()}">${status}</span></td>
-      <td><span style="font-family:var(--mono);font-size:10px;color:var(--accent)">+ KB</span></td>
+      <td><span style="font-family:var(--mono);font-size:10px;color:var(--accent);white-space:nowrap">+ KB →</span></td>
     </tr>`;
   }).join('');
 
-  document.getElementById('modal-table-container').innerHTML = `
-    <table style="width:100%">
+  document.getElementById('sub-table').innerHTML = `
+    <table>
       <thead><tr>
         <th>Número</th><th>Título</th><th>Data</th><th>Status</th>
-        <th style="width:50px;font-family:var(--mono);font-size:9px;color:var(--accent)">KB</th>
+        <th style="font-family:var(--mono);font-size:9px;color:var(--accent)">CRIAR KB</th>
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
 
-  // Row clicks
-  document.querySelectorAll('[data-modal-index]').forEach(row => {
+  // Row click listeners
+  document.querySelectorAll('[data-sub-index]').forEach(row => {
     row.addEventListener('click', function() {
-      const c = chamados[parseInt(this.dataset.modalIndex)];
-      fecharTemaModal();
+      const c = chamados[parseInt(this.dataset.subIndex)];
       abrirKBParaChamado(c);
     });
-    row.addEventListener('mouseenter', function() { this.style.background = 'rgba(79,142,247,0.08)'; });
-    row.addEventListener('mouseleave', function() { this.style.background = ''; });
+    row.addEventListener('mouseenter', function() {
+      this.querySelectorAll('td').forEach(td => td.style.background = 'rgba(79,142,247,0.08)');
+    });
+    row.addEventListener('mouseleave', function() {
+      this.querySelectorAll('td').forEach(td => td.style.background = '');
+    });
   });
 }
 
-function filtrarModalTabela() {
-  const q = document.getElementById('modal-search').value.toLowerCase();
-  const filtrados = q ? _modalChamados.filter(c =>
+function filtrarSubTabela() {
+  const q = document.getElementById('sub-search').value.toLowerCase();
+  const filtrados = q ? _subChamados.filter(c =>
     (c.Titulo||c.titulo||'').toLowerCase().includes(q) ||
     (c.Numero||c.numero||'').includes(q)
-  ) : _modalChamados;
-  renderModalTabela(filtrados);
+  ) : _subChamados;
+  renderSubTabela(filtrados);
 }
 
-function fecharTemaModal(event) {
-  if (event && event.target !== document.getElementById('tema-modal-overlay')) return;
-  document.getElementById('tema-modal-overlay').style.display = 'none';
-  document.body.style.overflow = '';
+function filtrarSubPorPalavra(palavra) {
+  document.getElementById('sub-search').value = palavra;
+  filtrarSubTabela();
 }
 
-function fecharTemaPanel() { fecharTemaModal(); }
+function fecharTemaModal(event) {}
+function fecharTemaPanel() { irParaDashboard(); }
 
 function irParaKBDoTema() {
-  fecharTemaModal();
   irParaKB(_temaAtualNome);
 }
 
