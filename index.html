@@ -534,6 +534,201 @@
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
 
+
+  /* ─── KNOWLEDGE BASE ─────────────────────────────────────────────────────── */
+  .kb-grid { display: flex; flex-direction: column; gap: 16px; }
+
+  .kb-instrucao {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .kb-instrucao:hover { border-color: var(--accent); }
+
+  .kb-instrucao-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    cursor: pointer;
+    gap: 12px;
+  }
+
+  .kb-instrucao-header:hover { background: var(--surface2); }
+
+  .kb-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    background: rgba(79,142,247,0.12);
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .kb-titulo {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    flex: 1;
+  }
+
+  .kb-chevron {
+    color: var(--muted);
+    font-size: 12px;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+  }
+
+  .kb-instrucao.open .kb-chevron { transform: rotate(180deg); }
+
+  .kb-instrucao-body {
+    display: none;
+    padding: 0 20px 20px;
+    border-top: 1px solid var(--border);
+  }
+
+  .kb-instrucao.open .kb-instrucao-body { display: block; }
+
+  .kb-steps {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.8;
+    white-space: pre-wrap;
+    margin: 14px 0;
+    padding: 14px;
+    background: var(--surface2);
+    border-radius: 6px;
+    border-left: 3px solid var(--accent);
+  }
+
+  .kb-images {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .kb-img-thumb {
+    width: 120px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+
+  .kb-img-thumb:hover { transform: scale(1.05); border-color: var(--accent); }
+
+  .kb-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+
+  .kb-related {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+
+  /* Image drop area */
+  .img-drop-area {
+    border: 2px dashed var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .img-drop-area:hover, .img-drop-area.dragover {
+    border-color: var(--accent);
+    background: rgba(79,142,247,0.05);
+  }
+
+  .img-preview-item {
+    position: relative;
+    display: inline-block;
+  }
+
+  .img-preview-item img {
+    width: 100px;
+    height: 75px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+  }
+
+  .img-preview-remove {
+    position: absolute;
+    top: -6px; right: -6px;
+    width: 18px; height: 18px;
+    background: var(--red);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    font-size: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+
+  /* Tab buttons */
+  .kb-tab {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-family: var(--mono);
+    font-size: 11px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    transition: all 0.15s;
+  }
+
+  .kb-tab:hover { color: var(--text); border-color: var(--accent); }
+  .kb-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  /* Lightbox */
+  #lightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.9);
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+    cursor: zoom-out;
+  }
+
+  #lightbox.show { display: flex; }
+  #lightbox img { max-width: 90vw; max-height: 90vh; border-radius: 8px; }
+
+  @media (max-width: 768px) {
+    .kb-grid { grid-template-columns: 1fr; }
+    .kb-img-thumb { width: 90px; height: 68px; }
+  }
+
   /* ─── FILTERS ────────────────────────────────────────────────────────────── */
   .filter-bar {
     display: flex;
@@ -1061,20 +1256,41 @@
       <div class="page-header">
         <div>
           <div class="page-title">Base de Conhecimento</div>
-          <div class="page-sub">PROBLEMAS E SOLUÇÕES</div>
+          <div id="kb-sub" class="page-sub">INSTRUÇÕES DE TRABALHO</div>
         </div>
-        <button class="btn btn-primary" onclick="showAddKB()">＋ Adicionar</button>
+        <button class="btn btn-primary" onclick="showAddKB(null)">＋ Nova Instrução</button>
       </div>
 
-      <div class="form-card" id="form-kb" style="display:none">
-        <div class="form-card-title">Nova Entrada</div>
+      <!-- FILTER TABS -->
+      <div id="kb-tabs" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px"></div>
+
+      <!-- SEARCH -->
+      <div class="form-card" style="padding:12px 20px;margin-bottom:20px">
+        <div class="search-box" style="background:transparent;border:none;padding:0">
+          <span style="color:var(--muted);font-size:14px">⌕</span>
+          <input type="text" id="kb-search" placeholder="Buscar instrução..." oninput="filterKB()" style="background:transparent;border:none;box-shadow:none;font-size:14px;width:100%">
+        </div>
+      </div>
+
+      <!-- NOVA INSTRUÇÃO FORM -->
+      <div class="form-card" id="form-kb" style="display:none;margin-bottom:20px">
+        <div class="form-card-title" id="form-kb-title">Nova Instrução de Trabalho</div>
         <div class="form-grid">
           <div class="form-group">
-            <label>Categoria</label>
+            <label>Tema / Categoria</label>
             <select id="kb-categoria">
-              <option>Acesso</option><option>TI</option><option>RH</option>
-              <option>RENAVE</option><option>Dealer</option><option>Email</option>
-              <option>VPN</option><option>Impressora</option><option>Geral</option>
+              <option value="Acesso / Senha">Acesso / Senha</option>
+              <option value="Dealer / Sistema">Dealer / Sistema</option>
+              <option value="E-mail">E-mail</option>
+              <option value="RENAVE / ATPV">RENAVE / ATPV</option>
+              <option value="Inclusão / Criação">Inclusão / Criação</option>
+              <option value="Liberação / Permissão">Liberação / Permissão</option>
+              <option value="Impressora / Hardware">Impressora / Hardware</option>
+              <option value="VPN / Rede">VPN / Rede</option>
+              <option value="Cadastro / Dados">Cadastro / Dados</option>
+              <option value="Erro / Instabilidade">Erro / Instabilidade</option>
+              <option value="RENAVE / Chassi">RENAVE / Chassi</option>
+              <option value="Geral">Geral</option>
             </select>
           </div>
           <div class="form-group">
@@ -1082,30 +1298,33 @@
             <input type="text" id="kb-relacionados" placeholder="#0802458, #0802456">
           </div>
           <div class="form-group full">
-            <label>Problema</label>
-            <input type="text" id="kb-problema" placeholder="Descrição do problema">
+            <label>Título do Problema</label>
+            <input type="text" id="kb-problema" placeholder="Ex: Usuário sem acesso ao Dealer após reset de senha">
           </div>
           <div class="form-group full">
-            <label>Solução</label>
-            <textarea id="kb-solucao" style="min-height:80px" placeholder="Passo a passo da solução..."></textarea>
+            <label>Passo a Passo da Solução</label>
+            <textarea id="kb-solucao" style="min-height:140px" placeholder="1. Acesse o sistema X&#10;2. Vá em Configurações > Usuários&#10;3. Localize o usuário pelo CPF&#10;4. Clique em Reativar Acesso&#10;5. Confirme e aguarde 5 minutos"></textarea>
+          </div>
+          <div class="form-group full">
+            <label>Imagens / Prints</label>
+            <div id="kb-img-area" class="img-drop-area" onclick="document.getElementById('kb-img-input').click()" onpaste="handlePaste(event)" ondragover="event.preventDefault()" ondrop="handleDrop(event)">
+              <div id="kb-img-placeholder">
+                <div style="font-size:28px;margin-bottom:8px">📎</div>
+                <div style="font-size:13px;color:var(--muted)">Clique para fazer upload, cole um print (Ctrl+V) ou arraste uma imagem</div>
+              </div>
+              <div id="kb-img-previews" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+            </div>
+            <input type="file" id="kb-img-input" accept="image/*" multiple style="display:none" onchange="handleFileInput(event)">
           </div>
         </div>
-        <div style="margin-top:16px; display:flex; gap:10px;">
-          <button class="btn btn-primary" onclick="salvarKB()">✓ Salvar</button>
-          <button class="btn btn-ghost" onclick="document.getElementById('form-kb').style.display='none'">Cancelar</button>
+        <div style="margin-top:16px;display:flex;gap:10px">
+          <button class="btn btn-primary" onclick="salvarKB()">✓ Salvar Instrução</button>
+          <button class="btn btn-ghost" onclick="cancelarKB()">Cancelar</button>
         </div>
       </div>
 
-      <div class="form-card" style="padding:12px 20px; margin-bottom:20px;">
-        <div class="search-box" style="background:transparent; border:none; padding:0;">
-          <span style="color:var(--muted);font-size:14px">⌕</span>
-          <input type="text" id="kb-search" placeholder="Buscar na base de conhecimento..." oninput="filterKB()" style="background:transparent; border:none; box-shadow:none; font-size:14px;">
-        </div>
-      </div>
-
-      <div class="kb-grid" id="kb-grid">
-        <div class="loading"><div class="spinner"></div> Carregando...</div>
-      </div>
+      <!-- KB GRID -->
+      <div class="kb-grid" id="kb-grid"></div>
     </div>
 
   </main>
@@ -1473,56 +1692,204 @@ async function importarLote() {
 }
 
 // ─── BASE DE CONHECIMENTO ─────────────────────────────────────────────────────
-function showAddKB() {
+let kbImagens = []; // base64 images for current form
+let kbFiltroAtivo = '';
+let kbEditId = null;
+
+function showAddKB(tema = null) {
+  kbImagens = [];
+  kbEditId = null;
+  document.getElementById('form-kb-title').textContent = 'Nova Instrução de Trabalho';
+  ['kb-problema','kb-solucao','kb-relacionados'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('kb-img-previews').innerHTML = '';
+  document.getElementById('kb-img-placeholder').style.display = 'flex';
+  if (tema) document.getElementById('kb-categoria').value = tema;
   document.getElementById('form-kb').style.display = 'block';
   document.getElementById('form-kb').scrollIntoView({ behavior: 'smooth' });
+}
+
+function cancelarKB() {
+  document.getElementById('form-kb').style.display = 'none';
+  kbImagens = [];
+  kbEditId = null;
 }
 
 function salvarKB() {
   const problema = document.getElementById('kb-problema').value.trim();
   const solucao = document.getElementById('kb-solucao').value.trim();
-  if (!problema || !solucao) { toast('Preencha o problema e a solução!', 'error'); return; }
+  if (!problema || !solucao) { toast('Preencha o título e a solução!', 'error'); return; }
 
-  const item = {
-    id: Date.now(),
-    categoria: document.getElementById('kb-categoria').value,
-    problema,
-    solucao,
-    relacionados: document.getElementById('kb-relacionados').value
-  };
+  if (kbEditId) {
+    const idx = kbData.findIndex(k => k.id === kbEditId);
+    if (idx >= 0) {
+      kbData[idx] = { ...kbData[idx],
+        categoria: document.getElementById('kb-categoria').value,
+        problema, solucao,
+        relacionados: document.getElementById('kb-relacionados').value,
+        imagens: kbImagens.length ? kbImagens : (kbData[idx].imagens || [])
+      };
+    }
+  } else {
+    const item = {
+      id: Date.now(),
+      categoria: document.getElementById('kb-categoria').value,
+      problema, solucao,
+      relacionados: document.getElementById('kb-relacionados').value,
+      imagens: [...kbImagens],
+      criadoEm: new Date().toLocaleDateString('pt-BR')
+    };
+    kbData.unshift(item);
+  }
 
-  kbData.unshift(item);
   localStorage.setItem('kb_data', JSON.stringify(kbData));
-  toast('Entrada salva na base de conhecimento!');
-  document.getElementById('form-kb').style.display = 'none';
+  toast(kbEditId ? 'Instrução atualizada!' : 'Instrução salva com sucesso!');
+  cancelarKB();
   renderKB();
-
-  // Limpa o form
-  ['kb-problema','kb-solucao','kb-relacionados'].forEach(id => document.getElementById(id).value = '');
 }
 
-function renderKB(filtro = '') {
-  const dados = filtro
-    ? kbData.filter(k =>
-        k.problema.toLowerCase().includes(filtro) ||
-        k.solucao.toLowerCase().includes(filtro) ||
-        k.categoria.toLowerCase().includes(filtro))
-    : kbData;
+function editarKB(id) {
+  const item = kbData.find(k => k.id === id);
+  if (!item) return;
+  kbEditId = id;
+  kbImagens = [...(item.imagens || [])];
+  document.getElementById('form-kb-title').textContent = 'Editar Instrução';
+  document.getElementById('kb-categoria').value = item.categoria;
+  document.getElementById('kb-problema').value = item.problema;
+  document.getElementById('kb-solucao').value = item.solucao;
+  document.getElementById('kb-relacionados').value = item.relacionados || '';
+  renderImagePreviews();
+  document.getElementById('form-kb').style.display = 'block';
+  document.getElementById('form-kb').scrollIntoView({ behavior: 'smooth' });
+}
 
+function deletarKB(id) {
+  if (!confirm('Excluir esta instrução?')) return;
+  kbData = kbData.filter(k => k.id !== id);
+  localStorage.setItem('kb_data', JSON.stringify(kbData));
+  toast('Instrução excluída.');
+  renderKB();
+}
+
+// ─── IMAGENS ──────────────────────────────────────────────────────────────────
+function handleFileInput(event) {
+  Array.from(event.target.files).forEach(file => addImage(file));
+}
+
+function handlePaste(event) {
+  const items = event.clipboardData?.items;
+  if (!items) return;
+  Array.from(items).forEach(item => {
+    if (item.type.startsWith('image/')) addImage(item.getAsFile());
+  });
+}
+
+function handleDrop(event) {
+  event.preventDefault();
+  Array.from(event.dataTransfer.files).forEach(file => {
+    if (file.type.startsWith('image/')) addImage(file);
+  });
+}
+
+function addImage(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    kbImagens.push(e.target.result);
+    renderImagePreviews();
+  };
+  reader.readAsDataURL(file);
+}
+
+function renderImagePreviews() {
+  const container = document.getElementById('kb-img-previews');
+  const placeholder = document.getElementById('kb-img-placeholder');
+  container.innerHTML = kbImagens.map((src, i) => `
+    <div class="img-preview-item">
+      <img src="${src}" onclick="openLightbox('${src}')">
+      <button class="img-preview-remove" onclick="removeImage(${i});event.stopPropagation()">✕</button>
+    </div>
+  `).join('');
+  placeholder.style.display = kbImagens.length ? 'none' : 'flex';
+}
+
+function removeImage(index) {
+  kbImagens.splice(index, 1);
+  renderImagePreviews();
+}
+
+// ─── LIGHTBOX ─────────────────────────────────────────────────────────────────
+function openLightbox(src) {
+  document.getElementById('lightbox-img').src = src;
+  document.getElementById('lightbox').classList.add('show');
+}
+
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('show');
+}
+
+// ─── RENDER KB ────────────────────────────────────────────────────────────────
+function renderKBTabs() {
+  const cats = [...new Set(kbData.map(k => k.categoria))];
+  const tabs = document.getElementById('kb-tabs');
+  if (!tabs) return;
+  tabs.innerHTML = `
+    <button class="kb-tab ${!kbFiltroAtivo ? 'active' : ''}" onclick="setKBFiltro('')">Todos (${kbData.length})</button>
+    ${cats.map(c => {
+      const count = kbData.filter(k => k.categoria === c).length;
+      return `<button class="kb-tab ${kbFiltroAtivo === c ? 'active' : ''}" onclick="setKBFiltro('${c}')">${c} (${count})</button>`;
+    }).join('')}
+  `;
+}
+
+function setKBFiltro(cat) {
+  kbFiltroAtivo = cat;
+  renderKBTabs();
+  renderKB();
+  if (cat) document.getElementById('kb-categoria').value = cat;
+}
+
+function renderKB(busca = '') {
+  renderKBTabs();
+  let dados = kbData;
+  if (kbFiltroAtivo) dados = dados.filter(k => k.categoria === kbFiltroAtivo);
+  if (busca) dados = dados.filter(k =>
+    k.problema.toLowerCase().includes(busca) ||
+    k.solucao.toLowerCase().includes(busca) ||
+    k.categoria.toLowerCase().includes(busca));
+
+  const grid = document.getElementById('kb-grid');
   if (!dados.length) {
-    document.getElementById('kb-grid').innerHTML =
-      '<div class="empty" style="grid-column:1/-1"><div class="empty-icon">◎</div><div class="empty-text">Nenhuma entrada na base de conhecimento.<br>Clique em "+ Adicionar" para começar.</div></div>';
+    grid.innerHTML = `<div class="empty"><div class="empty-icon">◎</div><div class="empty-text">Nenhuma instrução encontrada.<br>Clique em "+ Nova Instrução" para criar.</div></div>`;
     return;
   }
 
-  document.getElementById('kb-grid').innerHTML = dados.map(k => `
-    <div class="kb-card">
-      <div class="kb-category">${k.categoria}</div>
-      <div class="kb-problem">${k.problema}</div>
-      <div class="kb-solution">${k.solucao}</div>
-      ${k.relacionados ? `<div class="kb-related">Chamados: ${k.relacionados}</div>` : ''}
+  grid.innerHTML = dados.map(k => `
+    <div class="kb-instrucao" id="kbi-${k.id}">
+      <div class="kb-instrucao-header" onclick="toggleKB(${k.id})">
+        <span class="kb-tag">${k.categoria}</span>
+        <span class="kb-titulo">${k.problema}</span>
+        ${k.imagens?.length ? `<span style="font-size:11px;color:var(--muted);font-family:var(--mono);flex-shrink:0">📎 ${k.imagens.length}</span>` : ''}
+        ${k.criadoEm ? `<span style="font-family:var(--mono);font-size:10px;color:var(--muted);flex-shrink:0">${k.criadoEm}</span>` : ''}
+        <span class="kb-chevron">▼</span>
+      </div>
+      <div class="kb-instrucao-body">
+        <div class="kb-steps">${k.solucao}</div>
+        ${k.imagens?.length ? `
+          <div class="kb-images">
+            ${k.imagens.map(src => `<img class="kb-img-thumb" src="${src}" onclick="openLightbox('${src}')">`).join('')}
+          </div>` : ''}
+        ${k.relacionados ? `<div class="kb-related">📎 Chamados: ${k.relacionados}</div>` : ''}
+        <div class="kb-actions">
+          <button class="btn btn-ghost" style="font-size:11px;padding:5px 12px" onclick="editarKB(${k.id})">✎ Editar</button>
+          <button class="btn btn-danger" style="font-size:11px;padding:5px 12px" onclick="deletarKB(${k.id})">✕ Excluir</button>
+        </div>
+      </div>
     </div>
   `).join('');
+}
+
+function toggleKB(id) {
+  const el = document.getElementById('kbi-' + id);
+  el.classList.toggle('open');
 }
 
 function filterKB() {
@@ -1642,7 +2009,7 @@ function renderTemas(chamados) {
     '#06b6d4','#f97316','#8b5cf6','#ec4899','#14b8a6','#f59e0b','#84cc16'];
 
   document.getElementById('temas-grid').innerHTML = scores.slice(0, 9).map((t, i) => `
-    <div class="tema-card" style="cursor:pointer" onclick="filtrarPorTema(${JSON.stringify(t.keys)})" title="Clique para ver os chamados">
+    <div class="tema-card" style="cursor:pointer" onclick="filtrarPorTema(${JSON.stringify(t.keys)}, '${t.nome}')" title="Clique para abrir na Base de Conhecimento">
       <div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:${colors[i % colors.length]}"></div>
       <div style="display:flex;align-items:center;justify-content:space-between">
         <div class="tema-name">${t.nome}</div>
@@ -1672,21 +2039,33 @@ function fecharTabela() {
 }
 
 // Add click on tema card to filter by tema
-function filtrarPorTema(keys) {
-  const filtrados = todosOsChamados.filter(c => {
-    const titulo = (c.Titulo || c.titulo || '').toLowerCase();
-    return keys.some(k => titulo.includes(k));
-  });
-  document.getElementById('table-section').style.display = 'block';
-  document.getElementById('table-subtitle').textContent = `${filtrados.length} chamados neste tema`;
-  renderTable(filtrados);
-  document.getElementById('table-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+function filtrarPorTema(keys, nomeDoTema) {
+  // Navigate to KB page filtered by tema
+  kbFiltroAtivo = nomeDoTema || '';
+  renderKB();
+  // Switch to KB page
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-conhecimento').classList.add('active');
+  document.querySelectorAll('.nav-item')[3]?.classList.add('active');
+  // Update sub
+  document.getElementById('kb-sub').textContent = nomeDoTema ? `TEMA: ${nomeDoTema.toUpperCase()}` : 'INSTRUÇÕES DE TRABALHO';
+  // Pre-select category for new entries
+  if (nomeDoTema) document.getElementById('kb-categoria').value = nomeDoTema;
+  window.scrollTo(0,0);
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 document.getElementById('f-data').value = new Date().toISOString().split('T')[0];
 document.getElementById('lote-data').value = new Date().toISOString().split('T')[0];
 loadChamados();
+renderKB();
 </script>
+
+<!-- LIGHTBOX -->
+<div id="lightbox" onclick="closeLightbox()">
+  <img id="lightbox-img" src="" alt="Print">
+</div>
+
 </body>
 </html>
