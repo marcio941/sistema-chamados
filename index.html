@@ -533,6 +533,134 @@
   ::-webkit-scrollbar-track { background: var(--bg); }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
+
+  /* ─── FILTERS ────────────────────────────────────────────────────────────── */
+  .filter-bar {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .filter-group label {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 2px;
+  }
+
+  .filter-group select,
+  .filter-group input[type="date"] {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 7px 10px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    outline: none;
+    width: auto;
+    transition: border-color 0.15s;
+  }
+
+  .filter-group select:focus,
+  .filter-group input[type="date"]:focus {
+    border-color: var(--accent);
+  }
+
+  .tema-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .tema-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+
+  .tema-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--accent);
+  }
+
+  .tema-name {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+    letter-spacing: 0.5px;
+  }
+
+  .tema-count {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .tema-pct {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .tema-bar {
+    margin-top: 8px;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .tema-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 2px;
+    transition: width 1s ease;
+  }
+
+  .tema-examples {
+    margin-top: 8px;
+    font-size: 10px;
+    color: var(--muted);
+    font-family: var(--mono);
+    line-height: 1.5;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  @media (max-width: 768px) {
+    .filter-bar { gap: 10px; padding: 12px; }
+    .filter-group select, .filter-group input[type="date"] { font-size: 11px; padding: 6px 8px; }
+    #temas-grid { grid-template-columns: 1fr 1fr !important; }
+  }
+
+  @media (max-width: 480px) {
+    #temas-grid { grid-template-columns: 1fr !important; }
+  }
+
   /* ─── MOBILE ─────────────────────────────────────────────────────────────── */
   @media (max-width: 768px) {
     .app { flex-direction: column; height: auto; min-height: 100vh; }
@@ -691,6 +819,55 @@
           <div class="page-sub">VISÃO GERAL DOS CHAMADOS</div>
         </div>
         <button class="btn btn-primary" onclick="loadChamados()">⟳ Atualizar</button>
+      </div>
+
+      <!-- FILTROS -->
+      <div class="filter-bar">
+        <div class="filter-group">
+          <label>MÊS</label>
+          <select id="filter-mes" onchange="aplicarFiltros()">
+            <option value="">Todos</option>
+            <option value="01">Janeiro</option>
+            <option value="02">Fevereiro</option>
+            <option value="03">Março</option>
+            <option value="04">Abril</option>
+            <option value="05">Maio</option>
+            <option value="06">Junho</option>
+            <option value="07">Julho</option>
+            <option value="08">Agosto</option>
+            <option value="09">Setembro</option>
+            <option value="10">Outubro</option>
+            <option value="11">Novembro</option>
+            <option value="12">Dezembro</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>ANO</label>
+          <select id="filter-ano" onchange="aplicarFiltros()">
+            <option value="">Todos</option>
+            <option value="2025">2025</option>
+            <option value="2026">2026</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>DE</label>
+          <input type="date" id="filter-de" onchange="aplicarFiltros()">
+        </div>
+        <div class="filter-group">
+          <label>ATÉ</label>
+          <input type="date" id="filter-ate" onchange="aplicarFiltros()">
+        </div>
+        <button class="btn btn-ghost" style="font-size:11px;padding:6px 12px;align-self:flex-end" onclick="limparFiltros()">✕ Limpar</button>
+        <div id="filter-badge" style="display:none;align-self:flex-end;font-family:var(--mono);font-size:11px;color:var(--accent);padding:6px 0"></div>
+      </div>
+
+      <!-- TEMAS RECORRENTES -->
+      <div class="table-wrapper" style="margin-bottom:20px;padding:20px" id="temas-section">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div class="table-title">TEMAS RECORRENTES</div>
+          <div id="temas-periodo" style="font-family:var(--mono);font-size:10px;color:var(--muted)"></div>
+        </div>
+        <div id="temas-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"></div>
       </div>
 
       <!-- STATS CARDS -->
@@ -969,8 +1146,10 @@ async function loadChamados() {
     const res = await fetch(N8N.listar);
     const data = await res.json();
     todosOsChamados = data.chamados || [];
+    chamadosFiltrados = [...todosOsChamados];
     renderTable(todosOsChamados);
     updateStats(todosOsChamados);
+    renderTemas(todosOsChamados);
   } catch(e) {
     document.getElementById('table-container').innerHTML =
       '<div class="empty"><div class="empty-icon">⚠</div><div class="empty-text">Erro ao conectar com N8N.<br>Verifique se o workflow está ativo.</div></div>';
@@ -1341,6 +1520,124 @@ function filterKB() {
   const q = document.getElementById('kb-search').value.toLowerCase();
   renderKB(q);
 }
+
+
+// ─── FILTROS ──────────────────────────────────────────────────────────────────
+let chamadosFiltrados = [];
+
+function aplicarFiltros() {
+  const mes = document.getElementById('filter-mes').value;
+  const ano = document.getElementById('filter-ano').value;
+  const de = document.getElementById('filter-de').value;
+  const ate = document.getElementById('filter-ate').value;
+
+  chamadosFiltrados = todosOsChamados.filter(c => {
+    const data = c.Data || c.data || '';
+    const partes = data.split('/');
+    if (partes.length < 3) return true;
+    const [dia, cMes, cAno] = partes;
+
+    if (mes && cMes !== mes) return false;
+    if (ano && cAno !== ano) return false;
+
+    if (de || ate) {
+      const dataISO = `${cAno}-${cMes}-${dia}`;
+      if (de && dataISO < de) return false;
+      if (ate && dataISO > ate) return false;
+    }
+    return true;
+  });
+
+  const badge = document.getElementById('filter-badge');
+  if (mes || ano || de || ate) {
+    badge.style.display = 'block';
+    badge.textContent = `${chamadosFiltrados.length} chamados filtrados`;
+  } else {
+    badge.style.display = 'none';
+    chamadosFiltrados = [...todosOsChamados];
+  }
+
+  renderTable(chamadosFiltrados);
+  updateStats(chamadosFiltrados);
+  renderTemas(chamadosFiltrados);
+}
+
+function limparFiltros() {
+  document.getElementById('filter-mes').value = '';
+  document.getElementById('filter-ano').value = '';
+  document.getElementById('filter-de').value = '';
+  document.getElementById('filter-ate').value = '';
+  document.getElementById('filter-badge').style.display = 'none';
+  chamadosFiltrados = [...todosOsChamados];
+  renderTable(todosOsChamados);
+  updateStats(todosOsChamados);
+  renderTemas(todosOsChamados);
+}
+
+// ─── TEMAS RECORRENTES ────────────────────────────────────────────────────────
+const TEMAS = [
+  { nome: 'Acesso / Senha', keys: ['acesso','senha','bloqueio','desbloqueio','login','autenticad','authenticad','inativo','ativo','retorno','reativacao','reativação'] },
+  { nome: 'E-mail', keys: ['email','e-mail','e mail','microsoft','outlook','gmail','correio'] },
+  { nome: 'RENAVE / ATPV', keys: ['renave','atpv','atpve','renavam','denatran','detran'] },
+  { nome: 'Dealer / Sistema', keys: ['dealer','sistema','mobigestor','mobi','nbs','saga','mysaga','softcar','portal'] },
+  { nome: 'Abertura de Caixa', keys: ['caixa','abertura de caixa','abrir caixa','fechamento'] },
+  { nome: 'Impressora / Hardware', keys: ['impressora','computador','notebook','hardware','teclado','monitor','usb','driver','instalar','instalaç'] },
+  { nome: 'VPN / Rede / WiFi', keys: ['vpn','wifi','wi-fi','rede','internet','conexao','conexão','conecta'] },
+  { nome: 'Cadastro / Dados', keys: ['cadastro','cadastrar','atualizar','correção','correcao','nome','cpf','cnpj','dado'] },
+  { nome: 'Liberação / Permissão', keys: ['liberar','liberação','liberacao','permissao','permissão','aprovar','aprovador','acesso ao'] },
+  { nome: 'RENAVE / Chassi', keys: ['chassi','chasi','placa','veiculo','veículo','transferencia','transferência'] },
+  { nome: 'Erro / Instabilidade', keys: ['erro','falha','instabilidade','nao abre','não abre','nao funciona','não funciona','travado','lento','bug'] },
+  { nome: 'Inclusão / Criação', keys: ['incluir','inclusao','inclusão','criar','criação','novo usuario','novo usuário','novo colaborador','colaborador'] },
+];
+
+function renderTemas(chamados) {
+  if (!chamados.length) return;
+
+  const scores = TEMAS.map(tema => {
+    const matches = chamados.filter(c => {
+      const titulo = (c.Titulo || c.titulo || '').toLowerCase();
+      return tema.keys.some(k => titulo.includes(k));
+    });
+    return { nome: tema.nome, count: matches.length, exemplos: matches.slice(0,2).map(c => c.Titulo || c.titulo) };
+  }).filter(t => t.count > 0).sort((a,b) => b.count - a.count);
+
+  const maxCount = scores[0]?.count || 1;
+  const total = chamados.length;
+
+  // Periodo label
+  const mes = document.getElementById('filter-mes');
+  const ano = document.getElementById('filter-ano');
+  const mesNome = mes.options[mes.selectedIndex]?.text;
+  const anoVal = document.getElementById('filter-ano').value;
+  const periodoLabel = (mes.value || ano.value)
+    ? `${mes.value ? mesNome : 'Todos os meses'} ${anoVal || ''} — ${total} chamados`
+    : `Todo o período — ${total} chamados`;
+  document.getElementById('temas-periodo').textContent = periodoLabel;
+
+  const colors = ['var(--accent)','var(--green)','var(--yellow)','var(--red)','var(--accent2)',
+    '#06b6d4','#f97316','#8b5cf6','#ec4899','#14b8a6','#f59e0b','#84cc16'];
+
+  document.getElementById('temas-grid').innerHTML = scores.slice(0, 9).map((t, i) => `
+    <div class="tema-card" style="--tema-color:${colors[i % colors.length]}">
+      <div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:${colors[i % colors.length]}"></div>
+      <div class="tema-name">${t.nome}</div>
+      <div style="display:flex;align-items:baseline;gap:8px">
+        <div class="tema-count" style="color:${colors[i % colors.length]}">${t.count}</div>
+        <div class="tema-pct">${Math.round(t.count/total*100)}% do total</div>
+      </div>
+      <div class="tema-bar"><div class="tema-bar-fill" style="width:0;background:${colors[i % colors.length]}" data-w="${t.count/maxCount*100}"></div></div>
+      ${t.exemplos[0] ? `<div class="tema-examples">${t.exemplos[0].slice(0,45)}${t.exemplos[0].length>45?'...':''}</div>` : ''}
+    </div>
+  `).join('');
+
+  // Animate bars
+  setTimeout(() => {
+    document.querySelectorAll('.tema-bar-fill').forEach(el => {
+      el.style.width = el.dataset.w + '%';
+    });
+  }, 100);
+}
+
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 document.getElementById('f-data').value = new Date().toISOString().split('T')[0];
