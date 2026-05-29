@@ -22,6 +22,46 @@
     --sans: 'Syne', sans-serif;
   }
 
+  /* LIGHT MODE */
+  body.light {
+    --bg: #f0f2f8;
+    --surface: #ffffff;
+    --surface2: #e8eaf2;
+    --border: #d0d4e8;
+    --accent: #2563eb;
+    --accent2: #7c3aed;
+    --green: #16a34a;
+    --yellow: #d97706;
+    --red: #dc2626;
+    --text: #0f172a;
+    --muted: #64748b;
+  }
+
+  body.light::before {
+    background-image:
+      linear-gradient(rgba(148,163,184,0.3) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148,163,184,0.3) 1px, transparent 1px);
+    opacity: 0.5;
+  }
+
+  body.light::after {
+    background: radial-gradient(circle, rgba(37,99,235,0.06) 0%, transparent 70%);
+  }
+
+  body.light .sidebar {
+    background: #ffffff;
+    border-right-color: var(--border);
+    box-shadow: 2px 0 12px rgba(0,0,0,0.06);
+  }
+
+  body.light input, body.light select, body.light textarea {
+    color: var(--text);
+  }
+
+  body.light .badge.aberto { background: rgba(37,99,235,0.1); }
+  body.light .badge.resolvido { background: rgba(22,163,74,0.1); }
+  body.light .badge.pendente { background: rgba(217,119,6,0.1); }
+
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   body {
@@ -879,6 +919,17 @@
 
     .logo { display: none; }
     .sidebar-footer { display: none; }
+    /* Show theme toggle in mobile as floating button */
+    #tema-btn {
+      position: fixed;
+      bottom: 70px;
+      right: 12px;
+      width: auto !important;
+      padding: 8px 12px !important;
+      border-radius: 20px !important;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+      z-index: 99;
+    }
 
     nav {
       display: flex;
@@ -998,10 +1049,14 @@
     </nav>
 
     <div class="sidebar-footer">
-      <div class="status-dot">
+      <div class="status-dot" style="margin-bottom:12px">
         <span class="dot"></span>
         N8N CONECTADO
       </div>
+      <button onclick="toggleTema()" id="tema-btn" style="display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:7px 12px;cursor:pointer;width:100%;color:var(--muted);font-family:var(--mono);font-size:10px;letter-spacing:1px;transition:all 0.2s">
+        <span id="tema-icon">☀</span>
+        <span id="tema-label">MODO CLARO</span>
+      </button>
     </div>
   </aside>
 
@@ -2113,6 +2168,27 @@ function renderTemas(chamados) {
   }, 100);
 }
 
+
+function toggleTema() {
+  const isLight = document.body.classList.toggle('light');
+  localStorage.setItem('tema', isLight ? 'light' : 'dark');
+  document.getElementById('tema-icon').textContent = isLight ? '🌙' : '☀';
+  document.getElementById('tema-label').textContent = isLight ? 'MODO ESCURO' : 'MODO CLARO';
+}
+
+// Load saved theme
+(function() {
+  const saved = localStorage.getItem('tema');
+  if (saved === 'light') {
+    document.body.classList.add('light');
+    setTimeout(() => {
+      const icon = document.getElementById('tema-icon');
+      const label = document.getElementById('tema-label');
+      if (icon) icon.textContent = '🌙';
+      if (label) label.textContent = 'MODO ESCURO';
+    }, 0);
+  }
+})();
 
 function irParaDashboard() {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
