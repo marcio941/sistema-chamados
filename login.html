@@ -119,11 +119,11 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  const SUPABASE_URL = 'https://brlprkcmxxoiyxmcapww.supabase.co/rest/v1/';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJybHBya2NteHhvaXl4bWNhcHd3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MjEyNDUsImV4cCI6MjA5MDM5NzI0NX0.e94z1xlTNzsIcwhGamlK1b5CE4Kx2rk1g1fdmUgHKKM';
+  const SUPABASE_URL = 'SUA_SUPABASE_URL';
+  const SUPABASE_ANON_KEY = 'SUA_SUPABASE_ANON_KEY';
   const ALLOWED_EMAILS = [];
 
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   let isSignup = false;
   const emailInput = document.getElementById('email');
@@ -160,17 +160,17 @@
 
     if (isSignup) {
       setStatus('Criando conta...');
-      const result = await supabase.auth.signUp({ email, password });
+      const result = await sb.auth.signUp({ email, password });
       if (result.error) return setStatus(result.error.message, true);
       return setStatus('Conta criada! Verifique seu email para confirmar.');
     }
 
     setStatus('Entrando...');
-    const result = await supabase.auth.signInWithPassword({ email, password });
+    const result = await sb.auth.signInWithPassword({ email, password });
     if (result.error) return setStatus(result.error.message, true);
 
     if (!isAllowed(result.data.user.email)) {
-      await supabase.auth.signOut();
+      await sb.auth.signOut();
       return setStatus('Acesso nao autorizado.', true);
     }
     window.location.href = '/index.html';
@@ -179,14 +179,14 @@
   document.getElementById('forgotLink').addEventListener('click', async () => {
     const email = emailInput.value.trim();
     if (!email) return setStatus('Digite seu email acima primeiro.', true);
-    const result = await supabase.auth.resetPasswordForEmail(email);
+    const result = await sb.auth.resetPasswordForEmail(email);
     if (result.error) return setStatus(result.error.message, true);
     setStatus('Link de recuperacao enviado por email.');
   });
 
   document.getElementById('btnGoogle').addEventListener('click', async () => {
     setStatus('Redirecionando para o Google...');
-    const result = await supabase.auth.signInWithOAuth({
+    const result = await sb.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: window.location.origin + '/index.html' }
     });
@@ -194,7 +194,7 @@
   });
 
   (async () => {
-    const sessionResult = await supabase.auth.getSession();
+    const sessionResult = await sb.auth.getSession();
     const session = sessionResult.data.session;
     if (session && isAllowed(session.user.email)) {
       window.location.href = '/index.html';
