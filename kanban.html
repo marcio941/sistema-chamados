@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Central de Chamados — Kanban</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="auth-guard.js"></script>
+<style>
+:root {
+  --bg:#0a0a0f; --surface:#111118; --surface2:#1a1a24; --border:#2a2a3a;
+  --accent:#4f8ef7; --accent2:#7c3aed; --green:#22c55e; --yellow:#f59e0b;
+  --red:#ef4444; --text:#e8e8f0; --muted:#6b6b80;
+  --mono:'Space Mono',monospace; --sans:'Syne',sans-serif;
+}
+body.light {
+  --bg:#f0f2f8; --surface:#fff; --surface2:#e8eaf2; --border:#d0d4e8;
+  --accent:#2563eb; --green:#16a34a; --yellow:#d97706; --red:#dc2626;
+  --text:#0f172a; --muted:#64748b;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); font-family:var(--sans); min-height:100vh; }
+
+.topbar {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:16px 24px; background:var(--surface); border-bottom:1px solid var(--border);
+}
+.topbar-title { font-weight:800; font-size:18px; }
+.topbar-title span { color:var(--accent); }
+.topbar-actions { display:flex; gap:10px; align-items:center; }
+.btn {
+  background:var(--surface2); border:1px solid var(--border); color:var(--text);
+  padding:8px 16px; border-radius:8px; font-family:var(--mono); font-size:12px;
+  letter-spacing:.5px; cursor:pointer;
+}
+.btn:hover { border-color:var(--accent); }
+.btn-primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+
+.board-wrap { padding:20px 24px; overflow-x:auto; }
+.board {
+  display:flex; gap:16px; min-width:max-content;
+}
+.column {
+  width:280px; flex-shrink:0; background:var(--surface); border:1px solid var(--border);
+  border-radius:12px; display:flex; flex-direction:column; max-height:calc(100vh - 120px);
+}
+.column-header {
+  padding:14px 16px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.column-title { font-family:var(--mono); font-size:11px; letter-spacing:1px; text-transform:uppercase; font-weight:700; }
+.column-count {
+  background:var(--surface2); color:var(--muted); font-family:var(--mono);
+  font-size:11px; padding:2px 8px; border-radius:20px;
+}
+.column-body { padding:10px; overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:8px; min-height:60px; }
+.column-body.drag-over { background:rgba(79,142,247,0.08); }
+
+.card {
+  background:var(--surface2); border:1px solid var(--border); border-radius:10px;
+  padding:12px; cursor:grab; transition:border-color .15s;
+}
+.card:hover { border-color:var(--accent); }
+.card.dragging { opacity:0.4; }
+.card-numero { font-family:var(--mono); font-size:10px; color:var(--muted); margin-bottom:6px; }
+.card-titulo { font-size:13px; font-weight:600; line-height:1.4; margin-bottom:8px; }
+.card-footer { display:flex; align-items:center; justify-content:space-between; }
+.card-categoria {
+  font-family:var(--mono); font-size:10px; color:var(--accent);
+  background:rgba(79,142,247,0.1); padding:2px 8px; border-radius:20px;
+}
+.card-prioridade { font-size:10px; padding:2px 8px; border-radius:20px; font-family:var(--mono); }
+.pri-baixa { color:var(--muted); background:var(--surface); }
+.pri-media { color:var(--yellow); background:rgba(245,158,11,0.1); }
+.pri-alta { color:var(--red); background:rgba(239,68,68,0.1); }
+.pri-urgente { color:#fff; background:var(--red); }
+.card-atendente { font-size:11px; color:var(--muted); margin-top:8px; display:flex; align-items:center; gap:6px; }
+.avatar {
+  width:18px; height:18px; border-radius:50%; background:var(--accent2);
+  display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; color:#fff;
+}
+
+.empty-col { text-align:center; color:var(--muted); font-size:12px; padding:20px 0; font-family:var(--mono); }
+
+/* Modal */
+.modal-backdrop {
+  position:fixed; inset:0; background:rgba(0,0,0,0.6); display:none;
+  align-items:center; justify-content:center; z-index:50;
+}
+.modal-backdrop.open { display:flex; }
+.modal {
+  width:420px; background:var(--surface); border:1px solid var(--border); border-radius:12px;
+  padding:24px; max-height:85vh; overflow-y:auto;
+}
+.modal h3 { font-size:16px; margin-bottom:16px; }
+.modal label { display:block; font-family:var(--mono); font-size:11px; color:var(--muted); margin:14px 0 6px; letter-spacing:.5px; }
+.modal input, .modal select, .modal textarea {
+  width:100%; padding:9px 12px; background:var(--surface2); border:1px solid var(--border);
+  border-radius:8px; color:var(--text); font-family:var(--sans); font-size:13px;
+}
+.modal textarea { resize:vertical; min-height:70px; }
+.modal-actions { display:flex; gap:10px; margin-top:20px; }
+.modal-actions .btn { flex:1; text-align:center; }
+
+@media (max-width: 640px) {
+  .board { flex-direction:column; }
+  .column { width:100%; max-height:none; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-title">CENTRAL DE <span>CHAMADOS</span></div>
+  <div class="topbar-actions">
+    <button class="btn" onclick="toggleTema()">MODO CLARO</button>
+    <button class="btn" onclick="window.location.href='/index.html'">DASHBOARD</button>
+    <button class="btn btn-primary" onclick="abrirModalNovo()">+ NOVO CHAMADO</button>
+  </div>
+</div>
+
+<div class="board-wrap">
+  <div class="board" id="board"></div>
+</div>
+
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal">
+    <h3 id="modalTitulo">Chamado</h3>
+
+    <label>Título</label>
+    <input type="text" id="fResumo" placeholder="Resumo do chamado">
+
+    <label>Descrição</label>
+    <textarea id="fDescricao" placeholder="Detalhes do chamado"></textarea>
+
+    <label>Categoria</label>
+    <input type="text" id="fCategoria" placeholder="Ex: Acesso, Financeiro, Sistema">
+
+    <label>Prioridade</label>
+    <select id="fPrioridade">
+      <option value="baixa">Baixa</option>
+      <option value="media" selected>Média</option>
+      <option value="alta">Alta</option>
+      <option value="urgente">Urgente</option>
+    </select>
+
+    <label>Atendente responsável</label>
+    <select id="fAtendente">
+      <option value="">Sem atendente</option>
+    </select>
+
+    <div class="modal-actions">
+      <button class="btn" onclick="fecharModal()">CANCELAR</button>
+      <button class="btn btn-primary" onclick="salvarChamado()">SALVAR</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'SUA_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'SUA_SUPABASE_ANON_KEY';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const COLUNAS = [
+  { status: 'novo', titulo: 'Novo' },
+  { status: 'em_triagem', titulo: 'Em Triagem' },
+  { status: 'em_atendimento', titulo: 'Em Atendimento' },
+  { status: 'aguardando_cliente', titulo: 'Aguardando Cliente' },
+  { status: 'concluido', titulo: 'Concluído' },
+];
+
+let tickets = [];
+let atendentes = [];
+let ticketEmEdicao = null;
+
+function toggleTema() {
+  document.body.classList.toggle('light');
+}
+
+function iniciais(nome) {
+  if (!nome) return '?';
+  return nome.trim().split(' ').slice(0, 2).map(p => p[0]).join('').toUpperCase();
+}
+
+async function carregarAtendentes() {
+  const { data, error } = await sb.from('atendentes').select('*').eq('ativo', true);
+  if (!error) atendentes = data || [];
+
+  const select = document.getElementById('fAtendente');
+  select.innerHTML = '<option value="">Sem atendente</option>' +
+    atendentes.map(a => `<option value="${a.id}">${a.nome}</option>`).join('');
+}
+
+async function carregarTickets() {
+  const { data, error } = await sb
+    .from('tickets')
+    .select('*, atendentes(nome)')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+  tickets = data || [];
+  renderizarBoard();
+}
+
+function renderizarBoard() {
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+
+  COLUNAS.forEach(coluna => {
+    const itens = tickets.filter(t => t.status === coluna.status);
+
+    const colEl = document.createElement('div');
+    colEl.className = 'column';
+    colEl.innerHTML = `
+      <div class="column-header">
+        <div class="column-title">${coluna.titulo}</div>
+        <div class="column-count">${itens.length}</div>
+      </div>
+      <div class="column-body" data-status="${coluna.status}">
+        ${itens.length === 0 ? '<div class="empty-col">Sem chamados</div>' : ''}
+      </div>
+    `;
+
+    const body = colEl.querySelector('.column-body');
+
+    itens.forEach(ticket => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.draggable = true;
+      card.dataset.id = ticket.id;
+
+      const nomeAtendente = ticket.atendentes ? ticket.atendentes.nome : null;
+
+      card.innerHTML = `
+        <div class="card-numero">#${ticket.numero}</div>
+        <div class="card-titulo">${ticket.resumo || '(sem título)'}</div>
+        <div class="card-footer">
+          <span class="card-categoria">${ticket.categoria || 'Geral'}</span>
+          <span class="card-prioridade pri-${ticket.prioridade}">${ticket.prioridade}</span>
+        </div>
+        ${nomeAtendente ? `
+          <div class="card-atendente">
+            <div class="avatar">${iniciais(nomeAtendente)}</div>
+            ${nomeAtendente}
+          </div>` : ''}
+      `;
+
+      card.addEventListener('click', () => abrirModalEdicao(ticket));
+      card.addEventListener('dragstart', () => card.classList.add('dragging'));
+      card.addEventListener('dragend', () => card.classList.remove('dragging'));
+
+      body.appendChild(card);
+    });
+
+    body.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      body.classList.add('drag-over');
+    });
+    body.addEventListener('dragleave', () => body.classList.remove('drag-over'));
+    body.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      body.classList.remove('drag-over');
+      const dragCard = document.querySelector('.card.dragging');
+      if (!dragCard) return;
+      const ticketId = dragCard.dataset.id;
+      const novoStatus = body.dataset.status;
+      await moverTicket(ticketId, novoStatus);
+    });
+
+    board.appendChild(colEl);
+  });
+}
+
+async function moverTicket(id, novoStatus) {
+  const { error } = await sb.from('tickets').update({ status: novoStatus }).eq('id', id);
+  if (error) {
+    alert('Erro ao mover chamado: ' + error.message);
+    return;
+  }
+  await carregarTickets();
+}
+
+function abrirModalNovo() {
+  ticketEmEdicao = null;
+  document.getElementById('modalTitulo').textContent = 'Novo chamado';
+  document.getElementById('fResumo').value = '';
+  document.getElementById('fDescricao').value = '';
+  document.getElementById('fCategoria').value = '';
+  document.getElementById('fPrioridade').value = 'media';
+  document.getElementById('fAtendente').value = '';
+  document.getElementById('modalBackdrop').classList.add('open');
+}
+
+function abrirModalEdicao(ticket) {
+  ticketEmEdicao = ticket;
+  document.getElementById('modalTitulo').textContent = `Chamado #${ticket.numero}`;
+  document.getElementById('fResumo').value = ticket.resumo || '';
+  document.getElementById('fDescricao').value = ticket.descricao || '';
+  document.getElementById('fCategoria').value = ticket.categoria || '';
+  document.getElementById('fPrioridade').value = ticket.prioridade || 'media';
+  document.getElementById('fAtendente').value = ticket.atendente_id || '';
+  document.getElementById('modalBackdrop').classList.add('open');
+}
+
+function fecharModal() {
+  document.getElementById('modalBackdrop').classList.remove('open');
+}
+
+async function salvarChamado() {
+  const payload = {
+    resumo: document.getElementById('fResumo').value.trim(),
+    descricao: document.getElementById('fDescricao').value.trim(),
+    categoria: document.getElementById('fCategoria').value.trim(),
+    prioridade: document.getElementById('fPrioridade').value,
+    atendente_id: document.getElementById('fAtendente').value || null,
+  };
+
+  if (!payload.resumo) {
+    alert('Preencha o título do chamado.');
+    return;
+  }
+
+  if (ticketEmEdicao) {
+    const { error } = await sb.from('tickets').update(payload).eq('id', ticketEmEdicao.id);
+    if (error) return alert('Erro ao salvar: ' + error.message);
+  } else {
+    payload.status = 'novo';
+    payload.canal = 'manual';
+    payload.solicitante_nome = 'Criado manualmente';
+    payload.solicitante_telefone = 'nao_informado';
+    const { error } = await sb.from('tickets').insert(payload);
+    if (error) return alert('Erro ao criar: ' + error.message);
+  }
+
+  fecharModal();
+  await carregarTickets();
+}
+
+// Realtime: atualiza o board automaticamente quando algo muda
+sb.channel('tickets-realtime')
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, () => {
+    carregarTickets();
+  })
+  .subscribe();
+
+(async () => {
+  await carregarAtendentes();
+  await carregarTickets();
+})();
+</script>
+
+</body>
+</html>
