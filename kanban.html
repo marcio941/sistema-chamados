@@ -112,7 +112,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--sans); min-hei
 <body>
 
 <div class="topbar">
-  <div class="topbar-title">CENTRAL DE <span>CHAMADOS</span></div>
+  <div class="topbar-title" style="cursor:pointer" onclick="window.location.href='/index.html'">CENTRAL DE <span>CHAMADOS</span></div>
   <div class="topbar-actions">
     <button class="btn" onclick="toggleTema()">MODO CLARO</button>
     <button class="btn" onclick="window.location.href='/index.html'">DASHBOARD</button>
@@ -158,8 +158,8 @@ body { background:var(--bg); color:var(--text); font-family:var(--sans); min-hei
 </div>
 
 <script>
-const SUPABASE_URL = 'https://brlprkcmxxoiyxmcapww.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJybHBya2NteHhvaXl4bWNhcHd3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MjEyNDUsImV4cCI6MjA5MDM5NzI0NX0.e94z1xlTNzsIcwhGamlK1b5CE4Kx2rk1g1fdmUgHKKM';
+const SUPABASE_URL = 'SUA_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'SUA_SUPABASE_ANON_KEY';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const COLUNAS = [
