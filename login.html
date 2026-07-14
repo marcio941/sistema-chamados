@@ -8,109 +8,161 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: #0f172a;
-    color: #e2e8f0;
-    height: 100vh;
+    background: #0a0a0f;
+    color: #e8e8f0;
+    min-height: 100vh;
+  }
+  .topbar {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    background: #111118;
+    border-bottom: 1px solid #2a2a3a;
+    position: relative;
   }
-  .card {
-    background: #1e293b;
-    border-radius: 16px;
-    padding: 48px 40px;
-    width: 100%;
-    max-width: 380px;
-    text-align: center;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-  }
-  .card h1 {
-    font-size: 22px;
-    margin-bottom: 8px;
-  }
-  .card p {
-    color: #94a3b8;
-    font-size: 14px;
-    margin-bottom: 32px;
-  }
-  .google-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    width: 100%;
-    padding: 12px 20px;
-    background: #fff;
-    color: #1f2937;
-    border: none;
+  .brand { font-weight: 700; font-size: 16px; }
+  .brand span { color: #4f8ef7; }
+
+  .auth-trigger {
+    background: #1a1a24;
+    border: 1px solid #2a2a3a;
+    color: #e8e8f0;
+    padding: 8px 18px;
     border-radius: 8px;
-    font-size: 15px;
-    font-weight: 500;
+    font-size: 14px;
+    font-weight: 600;
     cursor: pointer;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
   }
-  .google-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  .auth-trigger:hover { border-color: #4f8ef7; }
+
+  .auth-panel {
+    position: absolute;
+    top: 56px;
+    right: 24px;
+    width: 320px;
+    background: #14141c;
+    border: 1px solid #2a2a3a;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    display: none;
+    z-index: 20;
   }
-  .google-btn svg { width: 18px; height: 18px; }
-  .status {
-    margin-top: 20px;
-    font-size: 13px;
-    color: #64748b;
-    min-height: 18px;
+  .auth-panel.open { display: block; }
+
+  .tabs { display: flex; gap: 4px; background: #1a1a24; border-radius: 8px; padding: 4px; margin-bottom: 16px; }
+  .tab {
+    flex: 1; text-align: center; padding: 8px 0; border-radius: 6px;
+    font-size: 13px; font-weight: 600; color: #6b6b80; cursor: pointer;
   }
+  .tab.active { background: #4f8ef7; color: #fff; }
+
+  label { display: block; font-size: 12px; color: #94a3b8; margin: 12px 0 4px; }
+  input[type="email"], input[type="password"] {
+    width: 100%; padding: 10px 12px; background: #1a1a24; border: 1px solid #2a2a3a;
+    border-radius: 8px; color: #e8e8f0; font-size: 14px;
+  }
+  input:focus { outline: none; border-color: #4f8ef7; }
+
+  .btn-primary {
+    width: 100%; margin-top: 16px; padding: 10px; background: #4f8ef7; color: #fff;
+    border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;
+  }
+  .btn-primary:hover { background: #3f7de6; }
+  .btn-primary:disabled { opacity: 0.6; cursor: default; }
+
+  .forgot { display: block; text-align: center; font-size: 12px; color: #6b6b80; margin-top: 10px; cursor: pointer; }
+  .forgot:hover { color: #4f8ef7; }
+
+  .divider {
+    display: flex; align-items: center; gap: 10px; margin: 18px 0; color: #6b6b80; font-size: 11px;
+  }
+  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: #2a2a3a; }
+
+  .google-btn {
+    width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;
+    padding: 10px; background: #fff; color: #1f2937; border: none; border-radius: 8px;
+    font-size: 14px; font-weight: 500; cursor: pointer;
+  }
+  .google-btn svg { width: 16px; height: 16px; }
+  .google-btn:hover { background: #f1f5f9; }
+
+  .status { margin-top: 12px; font-size: 12px; text-align: center; color: #6b6b80; min-height: 16px; }
   .status.error { color: #f87171; }
+
+  .content { padding: 40px 24px; text-align: center; color: #6b6b80; }
 </style>
 </head>
 <body>
 
-<div class="card">
-  <h1>Sistema de Chamados</h1>
-  <p>Entre com sua conta Google para continuar</p>
+<div class="topbar">
+  <div class="brand">SISTEMA <span>CHAMADOS</span></div>
+  <button class="auth-trigger" id="authTrigger">Entrar</button>
 
-  <button class="google-btn" id="loginBtn">
-    <svg viewBox="0 0 48 48">
-      <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.9 32.7 29.4 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.5 29.6 4.5 24 4.5 13.2 4.5 4.5 13.2 4.5 24S13.2 43.5 24 43.5 43.5 34.8 43.5 24c0-1.2-.1-2.4-.4-3.5z"/>
-      <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.9 18.9 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.5 29.6 4.5 24 4.5c-7.7 0-14.3 4.4-17.7 10.2z"/>
-      <path fill="#4CAF50" d="M24 43.5c5.5 0 10.4-1.9 14.2-5.1l-6.6-5.4C29.6 34.6 27 35.5 24 35.5c-5.4 0-9.9-3.3-11.3-8H5.9v5.2C9.3 39.1 16 43.5 24 43.5z"/>
-      <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.7 2.1-2 3.9-3.7 5.2l6.6 5.4C41.9 35.8 43.5 30.2 43.5 24c0-1.2-.1-2.4-.4-3.5z"/>
-    </svg>
-    Entrar com Google
-  </button>
+  <div class="auth-panel" id="authPanel">
+    <div class="tabs">
+      <div class="tab active" id="tabLogin">Entrar</div>
+      <div class="tab" id="tabSignup">Cadastrar</div>
+    </div>
 
-  <div class="status" id="status"></div>
+    <div id="formLogin">
+      <label>Email</label>
+      <input type="email" id="loginEmail" placeholder="seu@email.com">
+      <label>Senha</label>
+      <input type="password" id="loginPassword" placeholder="********">
+      <button class="btn-primary" id="btnLogin">Entrar</button>
+      <span class="forgot" id="btnForgot">Esqueci minha senha</span>
+    </div>
+
+    <div id="formSignup" style="display:none">
+      <label>Email</label>
+      <input type="email" id="signupEmail" placeholder="seu@email.com">
+      <label>Senha</label>
+      <input type="password" id="signupPassword" placeholder="********">
+      <button class="btn-primary" id="btnSignup">Criar conta</button>
+    </div>
+
+    <div class="divider">OU CONTINUE COM</div>
+
+    <button class="google-btn" id="btnGoogle">
+      <svg viewBox="0 0 48 48">
+        <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.9 32.7 29.4 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.5 29.6 4.5 24 4.5 13.2 4.5 4.5 13.2 4.5 24S13.2 43.5 24 43.5 43.5 34.8 43.5 24c0-1.2-.1-2.4-.4-3.5z"/>
+        <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.9 18.9 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.5 29.6 4.5 24 4.5c-7.7 0-14.3 4.4-17.7 10.2z"/>
+        <path fill="#4CAF50" d="M24 43.5c5.5 0 10.4-1.9 14.2-5.1l-6.6-5.4C29.6 34.6 27 35.5 24 35.5c-5.4 0-9.9-3.3-11.3-8H5.9v5.2C9.3 39.1 16 43.5 24 43.5z"/>
+        <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.7 2.1-2 3.9-3.7 5.2l6.6 5.4C41.9 35.8 43.5 30.2 43.5 24c0-1.2-.1-2.4-.4-3.5z"/>
+      </svg>
+      Continuar com Google
+    </button>
+
+    <div class="status" id="authStatus"></div>
+  </div>
+</div>
+
+<div class="content">
+  <p>Faca login para acessar o sistema de chamados.</p>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  // ⚠️ Substitua pelas credenciais do seu projeto Supabase
   const SUPABASE_URL = 'https://brlprkcmxxoiyxmcapww.supabase.co/rest/v1/';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJybHBya2NteHhvaXl4bWNhcHd3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MjEyNDUsImV4cCI6MjA5MDM5NzI0NX0.e94z1xlTNzsIcwhGamlK1b5CE4Kx2rk1g1fdmUgHKKM';
 
-  // ⚠️ Se quiser restringir o acesso a e-mails específicos, liste aqui.
-  // Deixe o array vazio ([]) para permitir qualquer conta Google.
   const ALLOWED_EMAILS = [];
 
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  const statusEl = document.getElementById('status');
-  const loginBtn = document.getElementById('loginBtn');
 
-  function setStatus(msg, isError = false) {
+  const authTrigger = document.getElementById('authTrigger');
+  const authPanel = document.getElementById('authPanel');
+  const tabLogin = document.getElementById('tabLogin');
+  const tabSignup = document.getElementById('tabSignup');
+  const formLogin = document.getElementById('formLogin');
+  const formSignup = document.getElementById('formSignup');
+  const statusEl = document.getElementById('authStatus');
+
+  function setStatus(msg, isError) {
     statusEl.textContent = msg;
     statusEl.className = 'status' + (isError ? ' error' : '');
-  }
-
-  // Se já tem sessão válida, redireciona direto pro sistema
-  async function checkExistingSession() {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-      if (isAllowed(session.user.email)) {
-        window.location.href = '/index.html';
-      } else {
-        await supabase.auth.signOut();
-      }
-    }
   }
 
   function isAllowed(email) {
@@ -118,21 +170,83 @@
     return ALLOWED_EMAILS.includes(email);
   }
 
-  loginBtn.addEventListener('click', async () => {
-    setStatus('Redirecionando para o Google...');
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        // ajuste para a URL da página protegida do seu sistema
-        redirectTo: window.location.origin + '/index.html'
-      }
-    });
-    if (error) {
-      setStatus('Erro ao iniciar login: ' + error.message, true);
+  authTrigger.addEventListener('click', () => {
+    authPanel.classList.toggle('open');
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!authPanel.contains(e.target) && e.target !== authTrigger) {
+      authPanel.classList.remove('open');
     }
   });
 
-  checkExistingSession();
+  tabLogin.addEventListener('click', () => {
+    tabLogin.classList.add('active');
+    tabSignup.classList.remove('active');
+    formLogin.style.display = 'block';
+    formSignup.style.display = 'none';
+    setStatus('');
+  });
+
+  tabSignup.addEventListener('click', () => {
+    tabSignup.classList.add('active');
+    tabLogin.classList.remove('active');
+    formSignup.style.display = 'block';
+    formLogin.style.display = 'none';
+    setStatus('');
+  });
+
+  document.getElementById('btnLogin').addEventListener('click', async () => {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    if (!email || !password) return setStatus('Preencha email e senha.', true);
+
+    setStatus('Entrando...');
+    const result = await supabase.auth.signInWithPassword({ email, password });
+    if (result.error) return setStatus(result.error.message, true);
+
+    if (!isAllowed(result.data.user.email)) {
+      await supabase.auth.signOut();
+      return setStatus('Acesso nao autorizado.', true);
+    }
+    window.location.href = '/index.html';
+  });
+
+  document.getElementById('btnSignup').addEventListener('click', async () => {
+    const email = document.getElementById('signupEmail').value.trim();
+    const password = document.getElementById('signupPassword').value;
+    if (!email || !password) return setStatus('Preencha email e senha.', true);
+
+    setStatus('Criando conta...');
+    const result = await supabase.auth.signUp({ email, password });
+    if (result.error) return setStatus(result.error.message, true);
+    setStatus('Conta criada! Verifique seu email para confirmar.');
+  });
+
+  document.getElementById('btnForgot').addEventListener('click', async () => {
+    const email = document.getElementById('loginEmail').value.trim();
+    if (!email) return setStatus('Digite seu email acima primeiro.', true);
+    const result = await supabase.auth.resetPasswordForEmail(email);
+    if (result.error) return setStatus(result.error.message, true);
+    setStatus('Link de recuperacao enviado por email.');
+  });
+
+  document.getElementById('btnGoogle').addEventListener('click', async () => {
+    setStatus('Redirecionando para o Google...');
+    const result = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin + '/index.html' }
+    });
+    if (result.error) setStatus('Erro: ' + result.error.message, true);
+  });
+
+  (async () => {
+    const sessionResult = await supabase.auth.getSession();
+    const session = sessionResult.data.session;
+    if (session && isAllowed(session.user.email)) {
+      window.location.href = '/index.html';
+    }
+  })();
 </script>
 
 </body>
