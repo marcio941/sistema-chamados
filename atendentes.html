@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Atendentes — Sistema de Chamados</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="auth-guard.js"></script>
+<style>
+:root {
+  --bg:#0a0a0f; --surface:#111118; --surface2:#1a1a24; --border:#2a2a3a;
+  --accent:#4f8ef7; --green:#22c55e; --red:#ef4444; --text:#e8e8f0; --muted:#6b6b80;
+  --mono:'Space Mono',monospace; --sans:'Syne',sans-serif;
+}
+body.light {
+  --bg:#f0f2f8; --surface:#fff; --surface2:#e8eaf2; --border:#d0d4e8;
+  --accent:#2563eb; --green:#16a34a; --red:#dc2626; --text:#0f172a; --muted:#64748b;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); font-family:var(--sans); min-height:100vh; }
+
+.topbar {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:16px 24px; background:var(--surface); border-bottom:1px solid var(--border);
+}
+.topbar-title { font-weight:800; font-size:18px; }
+.topbar-title span { color:var(--accent); }
+.btn {
+  background:var(--surface2); border:1px solid var(--border); color:var(--text);
+  padding:8px 16px; border-radius:8px; font-family:var(--mono); font-size:12px; cursor:pointer;
+}
+.btn:hover { border-color:var(--accent); }
+.btn-primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+.btn-danger { color:var(--red); }
+
+.content { max-width:720px; margin:0 auto; padding:32px 24px; }
+.page-title { font-size:22px; font-weight:800; margin-bottom:4px; }
+.page-sub { font-family:var(--mono); font-size:11px; color:var(--muted); letter-spacing:1px; margin-bottom:24px; }
+
+.form-card {
+  background:var(--surface); border:1px solid var(--border); border-radius:12px;
+  padding:20px; margin-bottom:24px; display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:10px; align-items:end;
+}
+.form-card label { display:block; font-family:var(--mono); font-size:10px; color:var(--muted); margin-bottom:5px; }
+.form-card input {
+  width:100%; padding:9px 12px; background:var(--surface2); border:1px solid var(--border);
+  border-radius:8px; color:var(--text); font-size:13px;
+}
+
+.lista { display:flex; flex-direction:column; gap:8px; }
+.item {
+  background:var(--surface); border:1px solid var(--border); border-radius:10px;
+  padding:14px 16px; display:flex; align-items:center; justify-content:space-between;
+}
+.item-info { display:flex; align-items:center; gap:12px; }
+.avatar {
+  width:36px; height:36px; border-radius:50%; background:var(--accent);
+  display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#fff; flex-shrink:0;
+}
+.item-nome { font-weight:600; font-size:14px; }
+.item-contato { font-size:12px; color:var(--muted); font-family:var(--mono); }
+.item-actions { display:flex; gap:8px; }
+
+@media (max-width: 640px) {
+  .form-card { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-title">CENTRAL DE <span>CHAMADOS</span></div>
+  <div>
+    <button class="btn" onclick="window.location.href='/kanban.html'">KANBAN</button>
+    <button class="btn" onclick="window.location.href='/index.html'">DASHBOARD</button>
+  </div>
+</div>
+
+<div class="content">
+  <div class="page-title">Atendentes</div>
+  <div class="page-sub">GESTÃO DA EQUIPE DE ATENDIMENTO</div>
+
+  <div class="form-card">
+    <div>
+      <label>Nome</label>
+      <input type="text" id="fNome" placeholder="Nome completo">
+    </div>
+    <div>
+      <label>Email</label>
+      <input type="email" id="fEmail" placeholder="email@empresa.com">
+    </div>
+    <div>
+      <label>WhatsApp</label>
+      <input type="text" id="fWhatsapp" placeholder="5562999999999">
+    </div>
+    <button class="btn btn-primary" onclick="adicionarAtendente()">+ ADICIONAR</button>
+  </div>
+
+  <div class="lista" id="lista"></div>
+</div>
+
+<script>
+const SUPABASE_URL = 'SUA_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'SUA_SUPABASE_ANON_KEY';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+function iniciais(nome) {
+  if (!nome) return '?';
+  return nome.trim().split(' ').slice(0, 2).map(p => p[0]).join('').toUpperCase();
+}
+
+async function carregarLista() {
+  const { data, error } = await sb.from('atendentes').select('*').eq('ativo', true).order('nome');
+  const lista = document.getElementById('lista');
+
+  if (error) {
+    lista.innerHTML = `<div class="item">Erro ao carregar: ${error.message}</div>`;
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    lista.innerHTML = '<div class="item">Nenhum atendente cadastrado ainda.</div>';
+    return;
+  }
+
+  lista.innerHTML = data.map(a => `
+    <div class="item">
+      <div class="item-info">
+        <div class="avatar">${iniciais(a.nome)}</div>
+        <div>
+          <div class="item-nome">${a.nome}</div>
+          <div class="item-contato">${a.email || 'sem email'} · ${a.whatsapp || 'sem whatsapp'}</div>
+        </div>
+      </div>
+      <div class="item-actions">
+        <button class="btn btn-danger" onclick="removerAtendente('${a.id}')">REMOVER</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function adicionarAtendente() {
+  const nome = document.getElementById('fNome').value.trim();
+  const email = document.getElementById('fEmail').value.trim();
+  const whatsapp = document.getElementById('fWhatsapp').value.trim();
+
+  if (!nome) {
+    alert('Preencha o nome do atendente.');
+    return;
+  }
+
+  const { error } = await sb.from('atendentes').insert({ nome, email: email || null, whatsapp: whatsapp || null });
+  if (error) {
+    alert('Erro ao adicionar: ' + error.message);
+    return;
+  }
+
+  document.getElementById('fNome').value = '';
+  document.getElementById('fEmail').value = '';
+  document.getElementById('fWhatsapp').value = '';
+  await carregarLista();
+}
+
+async function removerAtendente(id) {
+  if (!confirm('Remover este atendente da lista ativa?')) return;
+  const { error } = await sb.from('atendentes').update({ ativo: false }).eq('id', id);
+  if (error) {
+    alert('Erro ao remover: ' + error.message);
+    return;
+  }
+  await carregarLista();
+}
+
+carregarLista();
+</script>
+
+</body>
+</html>
