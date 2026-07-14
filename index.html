@@ -396,11 +396,23 @@ textarea{resize:vertical;min-height:120px;font-family:var(--mono);font-size:12px
 
 <script>
 // CONFIG
-const N8N = {
-  registrar:'https://n8n-n8n-editor.tkukfu.easypanel.host/webhook/registrar-chamado',
-  importar:'https://n8n-n8n-editor.tkukfu.easypanel.host/webhook/importar-lote',
-  listar:'https://n8n-n8n-editor.tkukfu.easypanel.host/webhook/listar-chamados'
-};
+const SUPABASE_URL = 'https://brlprkcmxxoiyxmcapww.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJybHBya2NteHhvaXl4bWNhcHd3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MjEyNDUsImV4cCI6MjA5MDM5NzI0NX0.e94z1xlTNzsIcwhGamlK1b5CE4Kx2rk1g1fdmUgHKKM';
+const dashboardSb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Mapeia status do Supabase (enum) para o rótulo que o dashboard já usa
+function statusParaLabel(status) {
+  if (status === 'concluido') return 'Resolvido';
+  if (status === 'novo') return 'Aberto';
+  return 'Pendente';
+}
+
+function formatarDataBR(isoString) {
+  if (!isoString) return '';
+  const d = new Date(isoString);
+  if (isNaN(d)) return '';
+  return d.toLocaleDateString('pt-BR');
+}
 
 // STATE
 let todosOsChamados = [];
@@ -447,37 +459,34 @@ function toggleTema() {
 async function loadChamados() {
   document.getElementById('stat-total').textContent='...';
   try {
-    const res=await fetch(N8N.listar, {
-      method:'GET',
-      headers:{'Accept':'application/json'},
-      mode:'cors'
-    });
-    const text=await res.text();
-    console.log('N8N RAW:', text.slice(0,500));
-    let data;
-    try { data=JSON.parse(text); } catch(e) { 
-      toast('JSON inválido: '+text.slice(0,100),'error');
+    const { data, error } = await dashboardSb
+      .from('tickets')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      toast('Erro ao buscar do Supabase: '+error.message,'error');
       return;
     }
-    console.log('N8N DATA type:', typeof data, Array.isArray(data));
-    // Handle different response formats
-    let chamados=[];
-    if(Array.isArray(data)) {
-      // Array of objects - check if first item has chamados
-      if(data[0]?.chamados) chamados=data[0].chamados;
-      else chamados=data;
-    }
-    else if(data.chamados) chamados=data.chamados;
-    else chamados=[];
-    console.log('Chamados encontrados:', chamados.length, chamados[0]);
+
+    // Mapeia os campos do Supabase para o formato que o dashboard ja usa
+    const chamados = (data||[]).map(t => ({
+      Numero: t.numero,
+      Titulo: t.resumo,
+      Categoria: t.categoria || 'Geral',
+      Status: statusParaLabel(t.status),
+      Data: formatarDataBR(t.created_at),
+      Solucao: t.descricao
+    }));
+
     todosOsChamados=chamados;
     chamadosFiltrados=[...todosOsChamados];
     updateStats(todosOsChamados);
     renderTemas(todosOsChamados);
-    if(chamados.length===0) toast('0 chamados — abrindo console para debug','error');
+    if(chamados.length===0) toast('Nenhum chamado encontrado','error');
   } catch(e) {
-    console.error('Erro N8N:',e);
-    toast('Erro ao conectar com N8N: '+e.message,'error');
+    console.error('Erro Supabase:',e);
+    toast('Erro ao conectar com o Supabase: '+e.message,'error');
   }
 }
 
@@ -693,11 +702,23 @@ async function registrarChamado() {
   const numero=document.getElementById('f-numero').value.trim();
   const titulo=document.getElementById('f-titulo').value.trim();
   if(!numero||!titulo){toast('Preencha número e título!','error');return;}
+
+  const statusMap = { 'Aberto':'novo', 'Resolvido':'concluido', 'Pendente':'em_atendimento' };
+  const statusSelecionado = document.getElementById('f-status').value;
+
   try {
-    const res=await fetch(N8N.registrar,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({numero,titulo,data:document.getElementById('f-data').value||new Date().toLocaleDateString('pt-BR'),categoria:document.getElementById('f-categoria').value,status:document.getElementById('f-status').value,solucao:document.getElementById('f-solucao').value})});
-    const data=await res.json();
-    if(data.success){toast('Chamado #'+numero+' salvo!');limparFormNovo();}else toast('Erro ao salvar','error');
-  } catch(e){toast('Erro de conexão','error');}
+    const { error } = await dashboardSb.from('tickets').insert({
+      resumo: titulo,
+      descricao: document.getElementById('f-solucao').value,
+      categoria: document.getElementById('f-categoria').value,
+      status: statusMap[statusSelecionado] || 'novo',
+      canal: 'manual',
+      solicitante_nome: 'Criado manualmente',
+      solicitante_telefone: 'nao_informado'
+    });
+    if(!error){toast('Chamado salvo!');limparFormNovo();loadChamados();}
+    else toast('Erro ao salvar: '+error.message,'error');
+  } catch(e){toast('Erro de conexão: '+e.message,'error');}
 }
 
 function limparFormNovo() {
