@@ -126,8 +126,19 @@ body { background:var(--bg); color:var(--text); font-family:var(--sans); min-hei
 .modal-actions .btn { flex:1; text-align:center; }
 
 @media (max-width: 640px) {
-  .board { flex-direction:column; }
-  .column { width:100%; max-height:none; }
+  .board-wrap {
+    padding:12px 8px;
+    scroll-snap-type:x mandatory;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  .board-wrap::-webkit-scrollbar { display:none; }
+  .board { gap:12px; }
+  .column {
+    width:85vw;
+    scroll-snap-align:center;
+    max-height:calc(100vh - 140px);
+  }
   .move-btn { width:28px; height:28px; font-size:16px; }
   .card-titulo { font-size:13px; }
 }
