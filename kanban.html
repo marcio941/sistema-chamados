@@ -42,44 +42,66 @@ body { background:var(--bg); color:var(--text); font-family:var(--sans); min-hei
   display:flex; gap:16px; min-width:max-content;
 }
 .column {
-  width:280px; flex-shrink:0; background:var(--surface); border:1px solid var(--border);
+  width:220px; flex-shrink:0; background:var(--surface); border:1px solid var(--border);
   border-radius:12px; display:flex; flex-direction:column; max-height:calc(100vh - 120px);
 }
 .column-header {
-  padding:14px 16px; border-bottom:1px solid var(--border);
+  padding:10px 12px; border-bottom:1px solid var(--border);
   display:flex; align-items:center; justify-content:space-between;
 }
-.column-title { font-family:var(--mono); font-size:11px; letter-spacing:1px; text-transform:uppercase; font-weight:700; }
+.column-title { font-family:var(--mono); font-size:10px; letter-spacing:1px; text-transform:uppercase; font-weight:700; }
 .column-count {
   background:var(--surface2); color:var(--muted); font-family:var(--mono);
-  font-size:11px; padding:2px 8px; border-radius:20px;
+  font-size:10px; padding:1px 7px; border-radius:20px;
 }
-.column-body { padding:10px; overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:8px; min-height:60px; }
-.column-body.drag-over { background:rgba(79,142,247,0.08); }
+.column-body { padding:8px; overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:6px; min-height:60px; }
 
 .card {
-  background:var(--surface2); border:1px solid var(--border); border-radius:10px;
-  padding:12px; cursor:grab; transition:border-color .15s;
+  background:var(--surface2); border:1px solid var(--border); border-radius:8px;
+  padding:8px 10px; transition:border-color .15s; position:relative;
 }
 .card:hover { border-color:var(--accent); }
-.card.dragging { opacity:0.4; }
-.card-numero { font-family:var(--mono); font-size:10px; color:var(--muted); margin-bottom:6px; }
-.card-titulo { font-size:13px; font-weight:600; line-height:1.4; margin-bottom:8px; }
-.card-footer { display:flex; align-items:center; justify-content:space-between; }
+.card-top { display:flex; align-items:center; justify-content:space-between; gap:6px; }
+.card-numero { font-family:var(--mono); font-size:9px; color:var(--muted); }
+.card-titulo { font-size:12px; font-weight:600; line-height:1.3; margin:4px 0 6px; cursor:pointer; }
+.card-footer { display:flex; align-items:center; justify-content:space-between; gap:6px; flex-wrap:wrap; }
 .card-categoria {
-  font-family:var(--mono); font-size:10px; color:var(--accent);
-  background:rgba(79,142,247,0.1); padding:2px 8px; border-radius:20px;
+  font-family:var(--mono); font-size:9px; color:var(--accent);
+  background:rgba(79,142,247,0.1); padding:1px 6px; border-radius:20px;
 }
-.card-prioridade { font-size:10px; padding:2px 8px; border-radius:20px; font-family:var(--mono); }
+.card-prioridade { font-size:9px; padding:1px 6px; border-radius:20px; font-family:var(--mono); }
 .pri-baixa { color:var(--muted); background:var(--surface); }
 .pri-media { color:var(--yellow); background:rgba(245,158,11,0.1); }
 .pri-alta { color:var(--red); background:rgba(239,68,68,0.1); }
 .pri-urgente { color:#fff; background:var(--red); }
-.card-atendente { font-size:11px; color:var(--muted); margin-top:8px; display:flex; align-items:center; gap:6px; }
+.card-atendente { font-size:10px; color:var(--muted); margin-top:6px; display:flex; align-items:center; gap:5px; }
 .avatar {
-  width:18px; height:18px; border-radius:50%; background:var(--accent2);
-  display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; color:#fff;
+  width:16px; height:16px; border-radius:50%; background:var(--accent2);
+  display:flex; align-items:center; justify-content:center; font-size:8px; font-weight:700; color:#fff; flex-shrink:0;
 }
+
+/* Botão de mover status (substitui o drag-and-drop, funciona em touch) */
+.move-btn {
+  background:var(--surface); border:1px solid var(--border); color:var(--muted);
+  width:22px; height:22px; border-radius:6px; font-size:13px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.move-btn:hover, .move-btn:active { border-color:var(--accent); color:var(--accent); }
+
+.move-menu {
+  position:absolute; top:28px; right:8px; background:var(--surface); border:1px solid var(--border);
+  border-radius:8px; padding:6px; z-index:30; box-shadow:0 8px 20px rgba(0,0,0,0.3); display:none;
+  min-width:170px;
+}
+.move-menu.open { display:block; }
+.move-menu-item {
+  padding:8px 10px; font-size:11px; font-family:var(--mono); border-radius:6px; cursor:pointer;
+  color:var(--text); display:flex; align-items:center; gap:6px;
+}
+.move-menu-item:hover { background:var(--surface2); }
+.move-menu-item.current { color:var(--muted); cursor:default; }
+.move-menu-item.current:hover { background:none; }
+.move-menu-dot { width:6px; height:6px; border-radius:50%; background:var(--accent); flex-shrink:0; }
 
 .empty-col { text-align:center; color:var(--muted); font-size:12px; padding:20px 0; font-family:var(--mono); }
 
@@ -106,6 +128,8 @@ body { background:var(--bg); color:var(--text); font-family:var(--sans); min-hei
 @media (max-width: 640px) {
   .board { flex-direction:column; }
   .column { width:100%; max-height:none; }
+  .move-btn { width:28px; height:28px; font-size:16px; }
+  .card-titulo { font-size:13px; }
 }
 </style>
 </head>
@@ -230,14 +254,16 @@ function renderizarBoard() {
     itens.forEach(ticket => {
       const card = document.createElement('div');
       card.className = 'card';
-      card.draggable = true;
       card.dataset.id = ticket.id;
 
       const nomeAtendente = ticket.atendentes ? ticket.atendentes.nome : null;
 
       card.innerHTML = `
-        <div class="card-numero">#${ticket.numero}</div>
-        <div class="card-titulo">${ticket.resumo || '(sem título)'}</div>
+        <div class="card-top">
+          <div class="card-numero">#${ticket.numero}</div>
+          <button class="move-btn" data-move-id="${ticket.id}" title="Mover para outro status">⋮</button>
+        </div>
+        <div class="card-titulo" data-open-id="${ticket.id}">${ticket.resumo || '(sem título)'}</div>
         <div class="card-footer">
           <span class="card-categoria">${ticket.categoria || 'Geral'}</span>
           <span class="card-prioridade pri-${ticket.prioridade}">${ticket.prioridade}</span>
@@ -247,33 +273,59 @@ function renderizarBoard() {
             <div class="avatar">${iniciais(nomeAtendente)}</div>
             ${nomeAtendente}
           </div>` : ''}
+        <div class="move-menu" id="move-menu-${ticket.id}"></div>
       `;
 
-      card.addEventListener('click', () => abrirModalEdicao(ticket));
-      card.addEventListener('dragstart', () => card.classList.add('dragging'));
-      card.addEventListener('dragend', () => card.classList.remove('dragging'));
+      card.querySelector('.card-titulo').addEventListener('click', () => abrirModalEdicao(ticket));
+      card.querySelector('.move-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        abrirMenuMover(ticket);
+      });
 
       body.appendChild(card);
-    });
-
-    body.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      body.classList.add('drag-over');
-    });
-    body.addEventListener('dragleave', () => body.classList.remove('drag-over'));
-    body.addEventListener('drop', async (e) => {
-      e.preventDefault();
-      body.classList.remove('drag-over');
-      const dragCard = document.querySelector('.card.dragging');
-      if (!dragCard) return;
-      const ticketId = dragCard.dataset.id;
-      const novoStatus = body.dataset.status;
-      await moverTicket(ticketId, novoStatus);
     });
 
     board.appendChild(colEl);
   });
 }
+
+let menuMoverAberto = null;
+
+function fecharMenuMover() {
+  if (menuMoverAberto) {
+    menuMoverAberto.classList.remove('open');
+    menuMoverAberto = null;
+  }
+}
+
+function abrirMenuMover(ticket) {
+  fecharMenuMover();
+  const menu = document.getElementById(`move-menu-${ticket.id}`);
+  if (!menu) return;
+
+  menu.innerHTML = COLUNAS.map(c => {
+    const isCurrent = c.status === ticket.status;
+    return `
+      <div class="move-menu-item ${isCurrent ? 'current' : ''}" ${isCurrent ? '' : `data-target-status="${c.status}" data-target-id="${ticket.id}"`}>
+        ${isCurrent ? '<span class="move-menu-dot"></span>' : ''}
+        ${c.titulo}${isCurrent ? ' (atual)' : ''}
+      </div>
+    `;
+  }).join('');
+
+  menu.querySelectorAll('[data-target-status]').forEach(item => {
+    item.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      await moverTicket(item.dataset.targetId, item.dataset.targetStatus);
+      fecharMenuMover();
+    });
+  });
+
+  menu.classList.add('open');
+  menuMoverAberto = menu;
+}
+
+document.addEventListener('click', () => fecharMenuMover());
 
 async function moverTicket(id, novoStatus) {
   const { error } = await sb.from('tickets').update({ status: novoStatus }).eq('id', id);
