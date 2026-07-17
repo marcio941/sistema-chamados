@@ -70,6 +70,10 @@ body { background:var(--bg); color:var(--text); font-family:var(--sans); min-hei
   background:rgba(79,142,247,0.1); padding:1px 6px; border-radius:20px;
 }
 .card-prioridade { font-size:9px; padding:1px 6px; border-radius:20px; font-family:var(--mono); }
+.card-fila {
+  font-family:var(--mono); font-size:9px; color:#a78bfa;
+  background:rgba(167,139,250,0.12); padding:1px 6px; border-radius:20px;
+}
 .pri-baixa { color:var(--muted); background:var(--surface); }
 .pri-media { color:var(--yellow); background:rgba(245,158,11,0.1); }
 .pri-alta { color:var(--red); background:rgba(239,68,68,0.1); }
@@ -180,6 +184,20 @@ body { background:var(--bg); color:var(--text); font-family:var(--sans); min-hei
       <option value="urgente">Urgente</option>
     </select>
 
+    <label>Fila</label>
+    <select id="fFila">
+      <option value="">Sem fila</option>
+      <option value="Field">Field</option>
+      <option value="Infraestrutura">Infraestrutura</option>
+      <option value="N1">N1</option>
+      <option value="N2">N2</option>
+      <option value="N3">N3</option>
+      <option value="Projetos Internos">Projetos Internos</option>
+      <option value="Projetos Externos">Projetos Externos</option>
+      <option value="Inovações">Inovações</option>
+      <option value="Dados">Dados</option>
+    </select>
+
     <label>Atendente responsável</label>
     <select id="fAtendente">
       <option value="">Sem atendente</option>
@@ -277,6 +295,7 @@ function renderizarBoard() {
         <div class="card-titulo" data-open-id="${ticket.id}">${ticket.resumo || '(sem título)'}</div>
         <div class="card-footer">
           <span class="card-categoria">${ticket.categoria || 'Geral'}</span>
+          ${ticket.fila ? `<span class="card-fila">${ticket.fila}</span>` : ''}
           <span class="card-prioridade pri-${ticket.prioridade}">${ticket.prioridade}</span>
         </div>
         ${nomeAtendente ? `
@@ -354,6 +373,7 @@ function abrirModalNovo() {
   document.getElementById('fDescricao').value = '';
   document.getElementById('fCategoria').value = '';
   document.getElementById('fPrioridade').value = 'media';
+  document.getElementById('fFila').value = '';
   document.getElementById('fAtendente').value = '';
   document.getElementById('modalBackdrop').classList.add('open');
 }
@@ -365,6 +385,7 @@ function abrirModalEdicao(ticket) {
   document.getElementById('fDescricao').value = ticket.descricao || '';
   document.getElementById('fCategoria').value = ticket.categoria || '';
   document.getElementById('fPrioridade').value = ticket.prioridade || 'media';
+  document.getElementById('fFila').value = ticket.fila || '';
   document.getElementById('fAtendente').value = ticket.atendente_id || '';
   document.getElementById('modalBackdrop').classList.add('open');
 }
@@ -379,6 +400,7 @@ async function salvarChamado() {
     descricao: document.getElementById('fDescricao').value.trim(),
     categoria: document.getElementById('fCategoria').value.trim(),
     prioridade: document.getElementById('fPrioridade').value,
+    fila: document.getElementById('fFila').value || null,
     atendente_id: document.getElementById('fAtendente').value || null,
   };
 
