@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Central de Chamados — Escolha uma opção</title>
+<style>
+  :root {
+    --bg: #0a0e14;
+    --bg-card: #12161f;
+    --border: #1f2530;
+    --text: #e8ebf0;
+    --text-dim: #7d8794;
+    --accent: #4f8ff7;
+    --accent-dim: #2a4a7f;
+    --ok: #3ecf8e;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 20px 48px;
+  }
+
+  header {
+    width: 100%;
+    max-width: 480px;
+    text-align: center;
+    margin-bottom: 28px;
+  }
+
+  .brand {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .brand span { color: var(--accent); }
+
+  h1 {
+    font-size: 22px;
+    line-height: 1.35;
+    margin: 14px 0 6px;
+    font-weight: 700;
+  }
+
+  .subtitle {
+    font-size: 14px;
+    color: var(--text-dim);
+    margin: 0;
+  }
+
+  main {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .option {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px;
+    text-align: left;
+    color: var(--text);
+    font-size: 16px;
+    line-height: 1.4;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: border-color .15s ease, transform .1s ease, background .15s ease;
+  }
+  .option:active {
+    transform: scale(0.98);
+    background: var(--bg);
+  }
+  .option:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .option .num {
+    flex: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: var(--accent-dim);
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .option .txt { flex: 1; }
+  .option .fila {
+    flex: none;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-dim);
+    opacity: 0.7;
+  }
+
+  .state {
+    width: 100%;
+    max-width: 480px;
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-dim);
+    font-size: 15px;
+  }
+  .state.error { color: #f77c7c; }
+
+  .success {
+    width: 100%;
+    max-width: 480px;
+    text-align: center;
+    padding: 20px;
+  }
+  .success .icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: rgba(62,207,142,0.12);
+    color: var(--ok);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 18px;
+    font-size: 28px;
+  }
+  .success h2 { font-size: 18px; margin: 0 0 8px; }
+  .success p { color: var(--text-dim); font-size: 14px; margin: 0; }
+
+  .spinner {
+    width: 20px; height: 20px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    display: inline-block;
+    animation: spin .7s linear infinite;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">Central de <span>Chamados</span></div>
+  <h1 id="titulo">Escolha uma opção</h1>
+  <p class="subtitle" id="subtitulo">Toque na alternativa que melhor descreve o seu caso.</p>
+</header>
+
+<main id="conteudo">
+  <div class="state"><span class="spinner"></span>Carregando opções…</div>
+</main>
+
+<script>
+  const WEBHOOK_BASE = 'https://n8n-n8n-webhook.tkukfu.easypanel.host/webhook';
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get('id');
+  const conteudo = document.getElementById('conteudo');
+
+  function renderErro(msg) {
+    conteudo.innerHTML = `<div class="state error">${msg}</div>`;
+  }
+
+  function renderOpcoes(dados) {
+    document.getElementById('titulo').textContent = dados.resumo || 'Escolha uma opção';
+    conteudo.innerHTML = '';
+    (dados.opcoes || []).forEach((op, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'option';
+      btn.innerHTML = `
+        <span class="num">${i + 1}</span>
+        <span class="txt">${op.texto}</span>
+        <span class="fila">${op.fila || ''}</span>
+      `;
+      btn.addEventListener('click', () => enviarEscolha(op, i));
+      conteudo.appendChild(btn);
+    });
+  }
+
+  function renderSucesso(ticket) {
+    conteudo.innerHTML = `
+      <div class="success">
+        <div class="icon">✓</div>
+        <h2>Chamado aberto${ticket && ticket.numero ? ' #' + ticket.numero : ''}</h2>
+        <p>Alguém da equipe vai te atender em breve. Pode fechar esta página.</p>
+      </div>
+    `;
+  }
+
+  async function carregarOpcoes() {
+    if (!id) {
+      renderErro('Link inválido ou expirado.');
+      return;
+    }
+    try {
+      const res = await fetch(`${WEBHOOK_BASE}/buscar-opcoes-menu?id=${encodeURIComponent(id)}`);
+      if (!res.ok) throw new Error();
+      const dados = await res.json();
+      if (!dados || !dados.opcoes || !dados.opcoes.length) {
+        renderErro('Essa solicitação já foi respondida ou expirou.');
+        return;
+      }
+      renderOpcoes(dados);
+    } catch (e) {
+      renderErro('Não foi possível carregar as opções. Tente novamente pelo WhatsApp.');
+    }
+  }
+
+  async function enviarEscolha(opcao, index) {
+    conteudo.innerHTML = `<div class="state"><span class="spinner"></span>Enviando escolha…</div>`;
+    try {
+      const res = await fetch(`${WEBHOOK_BASE}/responder-menu`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, opcao_index: index, opcao_texto: opcao.texto, fila: opcao.fila })
+      });
+      if (!res.ok) throw new Error();
+      const dados = await res.json().catch(() => ({}));
+      renderSucesso(dados);
+    } catch (e) {
+      renderErro('Não foi possível registrar sua escolha. Tente novamente.');
+    }
+  }
+
+  carregarOpcoes();
+</script>
+
+</body>
+</html>
