@@ -45,6 +45,15 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .page-title{font-size:26px;font-weight:800;color:var(--text)}
 .page-sub{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:4px;letter-spacing:1px}
 .stats-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:16px;margin-bottom:28px}
+.kpi-card{border-radius:14px;padding:18px 20px;color:#fff;box-shadow:0 6px 18px rgba(30,41,90,.12);position:relative;overflow:hidden}
+.kpi-label{font-family:var(--sans);font-size:12px;font-weight:600;opacity:.92;margin-bottom:10px;letter-spacing:.2px}
+.kpi-value{font-size:32px;font-weight:800;line-height:1}
+.kpi-blue{background:linear-gradient(135deg,#4f8ef7,#2f6fed)}
+.kpi-purple{background:linear-gradient(135deg,#8b7cf6,#6c5fc7)}
+.kpi-orange{background:linear-gradient(135deg,#fb923c,#f2994a)}
+.kpi-teal{background:linear-gradient(135deg,#22b8cf,#17a2b8)}
+.kpi-navy{background:linear-gradient(135deg,#3f5aa8,#2c3e8f)}
+.kpi-red{background:linear-gradient(135deg,#f0685f,#e0473e)}
 .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;position:relative;overflow:hidden;transition:border-color .2s}
 .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
 .stat-card.blue::before{background:var(--accent)}
@@ -81,7 +90,7 @@ td{padding:14px 20px;font-size:13px;border-bottom:1px solid rgba(42,42,58,.5);co
 tr:last-child td{border-bottom:none}
 tr[data-clickable]:hover td{background:rgba(79,142,247,.08);cursor:pointer}
 .num-cell{font-family:var(--mono);font-size:11px;color:var(--accent)}
-.badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:4px;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:1px}
+.badge{display:inline-flex;align-items:center;padding:4px 11px;border-radius:20px;font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:.2px}
 .badge.aberto{background:rgba(79,142,247,.12);color:var(--accent)}
 .badge.resolvido{background:rgba(34,197,94,.12);color:var(--green)}
 .badge.pendente{background:rgba(245,158,11,.12);color:var(--yellow)}
@@ -91,6 +100,8 @@ tr[data-clickable]:hover td{background:rgba(79,142,247,.08);cursor:pointer}
 .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
 .btn-ghost:hover{color:var(--text);border-color:var(--accent)}
 .btn-danger{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+.btn-success{background:#16a34a;color:#fff}
+.btn-success:hover{background:#128a3e;transform:translateY(-1px)}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .form-group{display:flex;flex-direction:column;gap:6px}
 .form-group.full{grid-column:1/-1}
@@ -213,7 +224,10 @@ textarea{resize:vertical;min-height:120px;font-family:var(--mono);font-size:12px
     <div class="page active" id="page-dashboard">
       <div class="page-header">
         <div><div class="page-title">Dashboard</div><div class="page-sub">VISÃO GERAL DOS CHAMADOS</div></div>
-        <button class="btn btn-primary" onclick="loadChamados()">⟳ Atualizar</button>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-ghost" onclick="loadChamados()">⟳ Atualizar</button>
+          <button class="btn btn-success" onclick="goTo('novo')">＋ Novo Chamado</button>
+        </div>
       </div>
       <!-- FILTROS -->
       <div class="filter-bar">
@@ -237,12 +251,12 @@ textarea{resize:vertical;min-height:120px;font-family:var(--mono);font-size:12px
       </div>
       <!-- STATS -->
       <div class="stats-grid">
-        <div class="stat-card blue"><div class="stat-label">Novo</div><div class="stat-value" id="stat-novo">—</div><div class="stat-bar"><div class="stat-bar-fill blue-fill" id="bar-novo"></div></div></div>
-        <div class="stat-card cyan"><div class="stat-label">Em Andamento</div><div class="stat-value" id="stat-andamento">—</div><div class="stat-bar"><div class="stat-bar-fill cyan-fill" id="bar-andamento"></div></div></div>
-        <div class="stat-card orange"><div class="stat-label">Aguard. Responsável</div><div class="stat-value" id="stat-aguard-resp">—</div><div class="stat-bar"><div class="stat-bar-fill orange-fill" id="bar-aguard-resp"></div></div></div>
-        <div class="stat-card yellow"><div class="stat-label">Aguard. Solicitante</div><div class="stat-value" id="stat-aguard-sol">—</div><div class="stat-bar"><div class="stat-bar-fill yellow-fill" id="bar-aguard-sol"></div></div></div>
-        <div class="stat-card green"><div class="stat-label">Resolvido</div><div class="stat-value" id="stat-resolvidos">—</div><div class="stat-bar"><div class="stat-bar-fill green-fill" id="bar-resolvidos"></div></div></div>
-        <div class="stat-card red"><div class="stat-label">Atrasado</div><div class="stat-value" id="stat-atrasado">—</div><div class="stat-bar"><div class="stat-bar-fill red-fill" id="bar-atrasado"></div></div></div>
+        <div class="kpi-card kpi-blue"><div class="kpi-label">Novo</div><div class="kpi-value" id="stat-novo">—</div></div>
+        <div class="kpi-card kpi-purple"><div class="kpi-label">Em Andamento</div><div class="kpi-value" id="stat-andamento">—</div></div>
+        <div class="kpi-card kpi-orange"><div class="kpi-label">Aguard. Responsável</div><div class="kpi-value" id="stat-aguard-resp">—</div></div>
+        <div class="kpi-card kpi-teal"><div class="kpi-label">Aguard. Solicitante</div><div class="kpi-value" id="stat-aguard-sol">—</div></div>
+        <div class="kpi-card kpi-navy"><div class="kpi-label">Resolvido</div><div class="kpi-value" id="stat-resolvidos">—</div></div>
+        <div class="kpi-card kpi-red"><div class="kpi-label">Atrasado</div><div class="kpi-value" id="stat-atrasado">—</div></div>
       </div>
       <!-- CHARTS -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
@@ -945,7 +959,7 @@ function closeLightbox() {document.getElementById('lightbox').classList.remove('
 // INIT
 document.getElementById('f-data').value=new Date().toISOString().split('T')[0];
 document.getElementById('lote-data').value=new Date().toISOString().split('T')[0];
-if(localStorage.getItem('tema')==='light'){document.body.classList.add('light');document.getElementById('tema-icon').textContent='◑';document.getElementById('tema-label').textContent='MODO ESCURO';}
+if(localStorage.getItem('tema')!=='dark'){document.body.classList.add('light');document.getElementById('tema-icon').textContent='◑';document.getElementById('tema-label').textContent='MODO ESCURO';}
 loadChamados();
 renderKB();
 </script>
